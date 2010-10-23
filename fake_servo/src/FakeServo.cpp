@@ -44,8 +44,8 @@ bool FakeServo::configureHook()
   }
 
 
-  joint_state_.resize(numberOfJoints_);
-  setpoint_.resize(numberOfJoints_);
+  joint_state_.states.resize(numberOfJoints_);
+  setpoint_.setpoints.resize(numberOfJoints_);
   return true;
 }
 
@@ -54,9 +54,9 @@ bool FakeServo::startHook()
 
   for (unsigned int i = 0; i < numberOfJoints_; i++)
   {
-    joint_state_[i].position = initial_pos_[i];
-    joint_state_[i].velocity = 0.0;
-    joint_state_[i].acceleration = 0.0;
+    joint_state_.states[i].position = initial_pos_[i];
+    joint_state_.states[i].velocity = 0.0;
+    joint_state_.states[i].effort = 0.0;
   }
   return true;
 }
@@ -65,14 +65,12 @@ void FakeServo::updateHook()
 {
   if (setpoint_port.read(setpoint_) == RTT::NewData)
   {
-    if (setpoint_.size() == numberOfJoints_)
+    if (setpoint_.setpoints.size() == numberOfJoints_)
     {
       for (unsigned int i = 0; i < numberOfJoints_; i++)
       {
-        joint_state_[i].position = setpoint_[i].position;
-        joint_state_[i].velocity = setpoint_[i].velocity;
-        joint_state_[i].acceleration = setpoint_[i].acceleration;
-
+        joint_state_.states[i].position = setpoint_.setpoints[i].position;
+        joint_state_.states[i].velocity = setpoint_.setpoints[i].velocity;
       }
     }
   }

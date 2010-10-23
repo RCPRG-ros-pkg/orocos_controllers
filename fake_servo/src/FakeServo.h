@@ -15,8 +15,8 @@
 #include <rtt/Port.hpp>
 #include <rtt/Property.hpp>
 
-#include "Setpoint.hpp"
-#include "JointState.hpp"
+#include "oro_servo_msgs/Setpoints.h"
+#include "oro_servo_msgs/ServoStates.h"
 
 class FakeServo: public RTT::TaskContext {
 public:
@@ -27,13 +27,13 @@ public:
 	bool startHook();
 	void updateHook();
 protected:
-	RTT::InputPort<std::vector<Setpoint> > setpoint_port;
-	RTT::OutputPort<std::vector<JointState> > jointState_port;
+	RTT::InputPort<oro_servo_msgs::Setpoints> setpoint_port;
+	RTT::OutputPort<oro_servo_msgs::ServoStates> jointState_port;
 
 	RTT::Property<int> numberOfJoints_prop;
 private:
-	std::vector<Setpoint> setpoint_;
-	std::vector<JointState> joint_state_;
+  oro_servo_msgs::Setpoints setpoint_;
+  oro_servo_msgs::ServoStates joint_state_;
 
   std::vector<double> initial_pos_;
 
