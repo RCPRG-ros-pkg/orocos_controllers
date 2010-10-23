@@ -16,8 +16,8 @@
 #include <rtt/Property.hpp>
 
 #include <trajectory_msgs/JointTrajectoryPoint.h>
-#include "JointState.hpp"
-#include "Setpoint.hpp"
+#include "oro_servo_msgs/ServoStates.h"
+#include "oro_servo_msgs/Setpoints.h"
 
 class JointSplineTrajectoryGenerator : public RTT::TaskContext {
 public:
@@ -32,8 +32,8 @@ protected:
 	RTT::InputPort<trajectory_msgs::JointTrajectoryPoint> trajectoryPoint_port;
 	RTT::OutputPort<bool> bufferReady_port;
 
-	RTT::OutputPort<std::vector<Setpoint> > setpoint_port;
-	RTT::InputPort<std::vector<JointState>  > jointState_port;
+	RTT::OutputPort<oro_servo_msgs::Setpoints> setpoint_port;
+	RTT::InputPort<oro_servo_msgs::ServoStates> jointState_port;
 
 	RTT::Property<int> numberOfJoints_prop;
 private:
@@ -48,7 +48,7 @@ private:
 
 	std::vector<std::vector<double> > coeff;
 
-	std::vector<Setpoint> setpoint;
+  oro_servo_msgs::Setpoints setpoint_;
 
 	unsigned int numberOfJoints;
 	bool trajectoryReady;

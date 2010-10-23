@@ -51,8 +51,8 @@ bool JointSplineTrajectoryGenerator::configureHook()
   for (unsigned int i = 0; i < numberOfJoints; i++)
     coeff[i].resize(6);
 
-  setpoint.resize(numberOfJoints);
-  setpoint_port.setDataSample(setpoint);
+  setpoint_.setpoints.resize(numberOfJoints);
+  setpoint_port.setDataSample(setpoint_);
 
   dt = this->getPeriod();
 
@@ -76,11 +76,11 @@ void JointSplineTrajectoryGenerator::updateHook()
 
   if (trajectoryReady)
   {
-    RTT::Logger::log(RTT::Logger::Debug) << "generating setpoint" << setpoint.size() << RTT::endlog();
+    RTT::Logger::log(RTT::Logger::Debug) << "generating setpoint" << setpoint_.setpoints.size() << RTT::endlog();
 
     for (unsigned int i = 0; i < numberOfJoints; i++)
-      sampleSpline(coeff[i], time * dt, setpoint[i].position, setpoint[i].velocity, setpoint[i].acceleration);
-    setpoint_port.write(setpoint);
+      sampleSpline(coeff[i], time * dt, setpoint_.setpoints[i].position, setpoint_.setpoints[i].velocity, setpoint_.setpoints[i].acceleration);
+    setpoint_port.write(setpoint_);
 
     if (time >= endTime)
     {
@@ -139,8 +139,8 @@ void JointSplineTrajectoryGenerator::updateHook()
     if (!bufferReady)
     {
       RTT::Logger::log(RTT::Logger::Debug) << "processing trajectory point [trajectory_ready = false]" << RTT::endlog();
-      std::vector<JointState> joints;
-      jointState_port.read(joints);
+      oro_servo_msgs::ServoStates servo;
+      jointState_port.read(servo);
 
       trajectoryOld.positions.resize(numberOfJoints);
       trajectoryOld.velocities.resize(numberOfJoints);
@@ -148,11 +148,11 @@ void JointSplineTrajectoryGenerator::updateHook()
 
       for (unsigned int i = 0; i < numberOfJoints; i++)
       {
-        trajectoryOld.positions[i] = joints[i].position;
-        trajectoryOld.velocities[i] = joints[i].velocity;
-        trajectoryOld.accelerations[i] = joints[i].acceleration;
+        trajectoryOld.positions[i] = servo.states[i].position;
+        trajectoryOld.velocities[i] = servo.states[i].velocity;
       }
-
+      trajectoryOld.accelerations.resize(0);
+      
       for (unsigned int j = 0; j < numberOfJoints; ++j)
       {
         if (trajectoryOld.accelerations.size() > 0 && trajectoryNew.accelerations.size() > 0)
