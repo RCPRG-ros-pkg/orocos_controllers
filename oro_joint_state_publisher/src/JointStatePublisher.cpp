@@ -25,7 +25,7 @@ bool JointStatePublisher::configureHook()
 
   names.resize(nJoints);
 
-  for (int i = 0; i < nJoints; i++)
+  for (unsigned int i = 0; i < nJoints; i++)
   {
     names[i] = ((RTT::Property<std::string>*) this->getProperty(
                   std::string("joint") + (char) (i + 48) + "_name"))->get();
@@ -38,8 +38,9 @@ bool JointStatePublisher::configureHook()
   jState.name.resize(nJoints);
   jState.position.resize(nJoints);
   jState.velocity.resize(nJoints);
+  jState.effort.resize(nJoints);
 
-  for (int i = 0; i < nJoints; i++)
+  for (unsigned int i = 0; i < nJoints; i++)
   {
     jState.name[i] = names[i].c_str();
   }
@@ -51,13 +52,14 @@ void JointStatePublisher::updateHook()
 {
   if (msrJnt_port.read(msrJnt) == RTT::NewData)
   {
-    if (msrJnt.size() == nJoints)
+    if (msrJnt.states.size() == nJoints)
     {
       jState.header.stamp = ros::Time::now();
-      for (int i = 0; i < nJoints; i++)
+      for (unsigned int i = 0; i < nJoints; i++)
       {
-        jState.position[i] = msrJnt[i].position;
-        jState.velocity[i] = msrJnt[i].velocity;
+        jState.position[i] = msrJnt.states[i].position;
+        jState.velocity[i] = msrJnt.states[i].velocity;
+        jState.effort[i] = msrJnt.states[i].effort;
       }
       jointState_port.write(jState);
     }
@@ -65,7 +67,7 @@ void JointStatePublisher::updateHook()
     {
       RTT::Logger::log(RTT::Logger::Error)
       << "Received joint state have invalid size (received : "
-      << msrJnt.size() << " expected : " << nJoints << " )"
+      << msrJnt.states.size() << " expected : " << nJoints << " )"
       << RTT::endlog();
     }
   }
