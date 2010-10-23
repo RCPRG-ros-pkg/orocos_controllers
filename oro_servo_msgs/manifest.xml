@@ -1,0 +1,18 @@
+<package>
+  <description brief="oro_servo_msgs">
+
+     oro_servo_msgs
+
+  </description>
+  <author>Konrad Banachowicz</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/oro_servo_msgs</url>
+
+  <export>
+    <cpp cflags="-I${prefix}/include"/>
+  </export>
+
+</package>
+
+

@@ -1,0 +1,19 @@
+<package>
+  <description brief="oro_joint_state_publisher">
+
+     oro_joint_state_publisher
+
+  </description>
+  <author>Konrad Banachowicz</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/joint_state_publisher</url>
+  <depend package="rtt"/>
+  <depend package="ocl"/>
+  <depend package="rtt_ros_integration"/>
+  <depend package="rtt_ros_integration_sensor_msgs"/>
+  <depend package="sensor_msgs"/>
+  <depend package="oro_servo_msgs"/>
+</package>
+
+

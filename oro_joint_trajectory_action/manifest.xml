@@ -1,0 +1,19 @@
+<package>
+  <description brief="oro_joint_trajectory_action">
+
+     oro_joint_trajectory_action
+
+  </description>
+  <author>Konrad Banachowicz</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/oro_joint_trajectory_action</url>
+  <depend package="rtt"/>
+  <depend package="ocl"/>
+  <depend package="oro_action_server"/>
+  <depend package="rtt_ros_integration_pr2_controllers_msgs"/>
+  <depend package="rtt_ros_integration_trajectory_msgs"/>
+
+</package>
+
+

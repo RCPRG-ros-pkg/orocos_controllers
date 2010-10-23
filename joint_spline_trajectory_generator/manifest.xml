@@ -1,0 +1,18 @@
+<package>
+  <description brief="joint_spline_trajectory_generator">
+
+     joint_spline_trajectory_generator
+
+  </description>
+  <author>Konrad Banachowicz</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/joint_spline_trajectory_generator</url>
+  <depend package="rtt"/>
+  <depend package="ocl"/>
+  <depend package="oro_servo_msgs"/>
+  <depend package="rtt_ros_integration_trajectory_msgs"/>
+
+</package>
+
+

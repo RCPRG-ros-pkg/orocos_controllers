@@ -1,0 +1,24 @@
+<package>
+  <description brief="rtt_ros_integration_pr2_controllers_msgs">
+
+     rtt_ros_integration_pr2_controllers_msgs
+
+  </description>
+  <author>konrad</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/rtt_ros_integration_pr2_controllers_msgs</url>
+  <depend package="rtt_ros_integration"/>
+  <depend package="rtt_ros_integration_std_msgs"/>
+  <depend package="pr2_controllers_msgs"/>
+  <depend package="rtt_ros_integration_actionlib_msgs"/>
+  <depend package="rtt_ros_integration_trajectory_msgs"/>
+  <depend package="rtt_ros_integration_geometry_msgs"/>
+
+  <export>
+    <cpp cflags="-I${prefix}/include"/>
+  </export>
+
+</package>
+
+
