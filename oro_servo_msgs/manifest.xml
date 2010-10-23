@@ -9,6 +9,8 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/oro_servo_msgs</url>
 
+  <depend package="rtt_ros_integration" />
+
   <export>
     <cpp cflags="-I${prefix}/include"/>
   </export>
