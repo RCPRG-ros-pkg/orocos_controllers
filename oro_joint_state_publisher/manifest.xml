@@ -1,13 +1,13 @@
 <package>
   <description brief="oro_joint_state_publisher">
 
-     oro_joint_state_publisher
+     This package contain orocos component, which will publish JoinState for you from within orocos controller.
 
   </description>
   <author>Konrad Banachowicz</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/joint_state_publisher</url>
+  <url>http://ros.org/wiki/oro_joint_state_publisher</url>
   <depend package="rtt"/>
   <depend package="ocl"/>
   <depend package="rtt_ros_integration"/>
