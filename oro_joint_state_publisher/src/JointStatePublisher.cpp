@@ -5,8 +5,8 @@
 #include "JointStatePublisher.hpp"
 
 JointStatePublisher::JointStatePublisher(const std::string& name) :
-    RTT::TaskContext(name, PreOperational), msrJnt_port("msrJnt"),
-    jointState_port("jointState"), nJoints_prop("numberOfJoints",
+    RTT::TaskContext(name, PreOperational), msrJnt_port("servo_states"),
+    jointState_port("joints_state"), nJoints_prop("number_of_joints",
         "number of joints")
 {
   ports()->addPort(msrJnt_port);
@@ -66,7 +66,7 @@ void JointStatePublisher::updateHook()
     else
     {
       RTT::Logger::log(RTT::Logger::Error)
-      << "Received joint state have invalid size (received : "
+      << "Received servo state have invalid size (received : "
       << msrJnt.states.size() << " expected : " << nJoints << " )"
       << RTT::endlog();
     }
