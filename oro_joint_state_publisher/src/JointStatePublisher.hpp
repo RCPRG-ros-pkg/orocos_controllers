@@ -20,15 +20,15 @@ public:
   bool configureHook();
   void updateHook();
 protected:
-  RTT::InputPort<oro_servo_msgs::ServoStates> msrJnt_port;
-  RTT::OutputPort<sensor_msgs::JointState> jointState_port;
+  RTT::InputPort<oro_servo_msgs::ServoStates> servo_state_port;
+  RTT::OutputPort<sensor_msgs::JointState> joint_state_port;
 
-  RTT::Property<unsigned int> nJoints_prop;
+  RTT::Property<unsigned int> number_of_joints_prop;
 private:
-  sensor_msgs::JointState jState;
-  oro_servo_msgs::ServoStates msrJnt;
-  unsigned int nJoints;
-  std::vector<std::string> names;
+  sensor_msgs::JointState joint_state_;
+  oro_servo_msgs::ServoStates servo_state_;
+  unsigned int number_of_joints_;
+  std::vector<std::string> names_;
 };
 
 #endif

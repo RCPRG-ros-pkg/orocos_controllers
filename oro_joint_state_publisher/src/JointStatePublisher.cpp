@@ -5,14 +5,14 @@
 #include "JointStatePublisher.hpp"
 
 JointStatePublisher::JointStatePublisher(const std::string& name) :
-    RTT::TaskContext(name, PreOperational), msrJnt_port("servo_states"),
-    jointState_port("joints_state"), nJoints_prop("number_of_joints",
+    RTT::TaskContext(name, PreOperational), servo_state_port("servo_states"),
+    joint_state_port("joints_state"), number_of_joints_prop("number_of_joints",
         "number of joints")
 {
-  ports()->addPort(msrJnt_port);
-  ports()->addPort(jointState_port);
+  ports()->addPort(servo_state_port);
+  ports()->addPort(joint_state_port);
 
-  this->addProperty(nJoints_prop);
+  this->addProperty(number_of_joints_prop);
 }
 
 JointStatePublisher::~JointStatePublisher()
@@ -21,28 +21,28 @@ JointStatePublisher::~JointStatePublisher()
 
 bool JointStatePublisher::configureHook()
 {
-  nJoints = nJoints_prop.get();
+  number_of_joints_ = number_of_joints_prop.get();
 
-  names.resize(nJoints);
+  names_.resize(number_of_joints_);
 
-  for (unsigned int i = 0; i < nJoints; i++)
+  for (unsigned int i = 0; i < number_of_joints_; i++)
   {
-    names[i] = ((RTT::Property<std::string>*) this->getProperty(
+    names_[i] = ((RTT::Property<std::string>*) this->getProperty(
                   std::string("joint") + (char) (i + 48) + "_name"))->get();
   }
-  if (nJoints != names.size())
+  if (number_of_joints_ != names_.size())
   {
     return false;
   }
 
-  jState.name.resize(nJoints);
-  jState.position.resize(nJoints);
-  jState.velocity.resize(nJoints);
-  jState.effort.resize(nJoints);
+  joint_state_.name.resize(number_of_joints_);
+  joint_state_.position.resize(number_of_joints_);
+  joint_state_.velocity.resize(number_of_joints_);
+  joint_state_.effort.resize(number_of_joints_);
 
-  for (unsigned int i = 0; i < nJoints; i++)
+  for (unsigned int i = 0; i < number_of_joints_; i++)
   {
-    jState.name[i] = names[i].c_str();
+    joint_state_.name[i] = names_[i].c_str();
   }
 
   return true;
@@ -50,24 +50,24 @@ bool JointStatePublisher::configureHook()
 
 void JointStatePublisher::updateHook()
 {
-  if (msrJnt_port.read(msrJnt) == RTT::NewData)
+  if (servo_state_port.read(servo_state_) == RTT::NewData)
   {
-    if (msrJnt.states.size() == nJoints)
+    if (servo_state_.states.size() == number_of_joints_)
     {
-      jState.header.stamp = ros::Time::now();
-      for (unsigned int i = 0; i < nJoints; i++)
+      joint_state_.header.stamp = ros::Time::now();
+      for (unsigned int i = 0; i < number_of_joints_; i++)
       {
-        jState.position[i] = msrJnt.states[i].position;
-        jState.velocity[i] = msrJnt.states[i].velocity;
-        jState.effort[i] = msrJnt.states[i].effort;
+        joint_state_.position[i] = servo_state_.states[i].position;
+        joint_state_.velocity[i] = servo_state_.states[i].velocity;
+        joint_state_.effort[i] = servo_state_.states[i].effort;
       }
-      jointState_port.write(jState);
+      joint_state_port.write(joint_state_);
     }
     else
     {
       RTT::Logger::log(RTT::Logger::Error)
       << "Received servo state have invalid size (received : "
-      << msrJnt.states.size() << " expected : " << nJoints << " )"
+      << servo_state_.states.size() << " expected : " << number_of_joints_ << " )"
       << RTT::endlog();
     }
   }
