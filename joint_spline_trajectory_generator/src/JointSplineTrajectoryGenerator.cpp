@@ -18,7 +18,7 @@ static inline void generatePowers(int n, double x, double* powers)
   }
 }
 
-JointSplineTrajectoryGenerator::JointSplineTrajectoryGenerator(const std::string& name) : RTT::TaskContext(name, PreOperational), trajectoryPoint_port("trajectoryPoint"), bufferReady_port("bufferReady"), setpoint_port("setpoint"), jointState_port("jointState"), numberOfJoints_prop("numberOfJoints", "number of joints used", 0)
+JointSplineTrajectoryGenerator::JointSplineTrajectoryGenerator(const std::string& name) : RTT::TaskContext(name, PreOperational), trajectoryPoint_port("trajectory_point"), bufferReady_port("buffer_ready"), setpoint_port("setpoint"), jointState_port("servo_states"), numberOfJoints_prop("number_of_joints", "number of joints used", 0)
 {
   this->ports()->addPort(trajectoryPoint_port);
   this->ports()->addPort(bufferReady_port);

@@ -10,8 +10,8 @@
 
 JointTrajectoryAction::JointTrajectoryAction(const std::string& name) :
     RTT::TaskContext(name, PreOperational), trajectoryPoint_port(
-      "trajectoryPoint"), bufferReady_port("bufferReady"),
-    numberOfJoints_prop("numberOfJoints", "", 0), as(this,
+      "trajectory_point"), bufferReady_port("buffer_ready"),
+    numberOfJoints_prop("number_of_joints", "", 0), as(this,
         "JointTrajectoryAction", boost::bind(
           &JointTrajectoryAction::goalCB, this, _1),
         boost::bind(&JointTrajectoryAction::cancelCB, this, _1),

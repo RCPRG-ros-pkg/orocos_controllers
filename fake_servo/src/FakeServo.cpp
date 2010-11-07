@@ -11,7 +11,7 @@
 
 FakeServo::FakeServo(const std::string& name) :
     RTT::TaskContext(name, PreOperational), setpoint_port("setpoint"), jointState_port(
-      "jointState"), numberOfJoints_prop("numberOfJoints", "", 0)
+      "servo_states"), numberOfJoints_prop("number_of_joints", "", 0)
 {
 
   this->ports()->addPort(setpoint_port);
