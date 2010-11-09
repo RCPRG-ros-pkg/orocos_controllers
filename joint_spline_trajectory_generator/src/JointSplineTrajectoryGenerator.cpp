@@ -77,9 +77,13 @@ void JointSplineTrajectoryGenerator::updateHook()
   if (trajectoryReady)
   {
     RTT::Logger::log(RTT::Logger::Debug) << "generating setpoint" << setpoint_.setpoints.size() << RTT::endlog();
-
+//    std::cout << "new setpoint : ";
     for (unsigned int i = 0; i < numberOfJoints; i++)
+    {
       sampleSpline(coeff[i], time * dt, setpoint_.setpoints[i].position, setpoint_.setpoints[i].velocity, setpoint_.setpoints[i].acceleration);
+//      std::cout << setpoint_.setpoints[i].position << " ";
+    }
+ //   std::cout << endl;
     setpoint_port.write(setpoint_);
 
     if (time >= endTime)
@@ -145,6 +149,12 @@ void JointSplineTrajectoryGenerator::updateHook()
       trajectoryOld.positions.resize(numberOfJoints);
       trajectoryOld.velocities.resize(numberOfJoints);
       trajectoryOld.accelerations.resize(numberOfJoints);
+
+      if(servo.states.size() != numberOfJoints)
+      {
+        std::cout << "servo.states size : " << servo.states.size() << " expected : " << numberOfJoints << std::endl;
+        return ;
+      }      
 
       for (unsigned int i = 0; i < numberOfJoints; i++)
       {
