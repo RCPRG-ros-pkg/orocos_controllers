@@ -45,6 +45,7 @@ bool FakeServo::configureHook()
 
 
   joint_state_.states.resize(numberOfJoints_);
+  joint_state_.setpoints.resize(numberOfJoints_);
   setpoint_.setpoints.resize(numberOfJoints_);
   return true;
 }
@@ -57,6 +58,11 @@ bool FakeServo::startHook()
     joint_state_.states[i].position = initial_pos_[i];
     joint_state_.states[i].velocity = 0.0;
     joint_state_.states[i].effort = 0.0;
+
+    joint_state_.setpoints[i].position = initial_pos_[i];
+    joint_state_.setpoints[i].velocity = 0.0;
+    joint_state_.setpoints[i].acceleration = 0.0;
+
   }
   return true;
 }
@@ -72,6 +78,7 @@ void FakeServo::updateHook()
         joint_state_.states[i].position = setpoint_.setpoints[i].position;
         joint_state_.states[i].velocity = setpoint_.setpoints[i].velocity;
       }
+      joint_state_.setpoints = setpoint_.setpoints;
     }
   }
   jointState_port.write(joint_state_);

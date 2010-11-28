@@ -148,10 +148,11 @@ void JointSplineTrajectoryGenerator::updateHook()
 
       for (unsigned int i = 0; i < numberOfJoints; i++)
       {
-        trajectoryOld.positions[i] = servo.states[i].position;
-        trajectoryOld.velocities[i] = servo.states[i].velocity;
+        trajectoryOld.positions[i] = servo.setpoints[i].position;
+        trajectoryOld.velocities[i] = servo.setpoints[i].velocity;
+        trajectoryOld.accelerations[i] = servo.setpoints[i].acceleration;
       }
-      trajectoryOld.accelerations.resize(0);
+      //trajectoryOld.accelerations.resize(0);
       
       for (unsigned int j = 0; j < numberOfJoints; ++j)
       {
