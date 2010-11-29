@@ -16,5 +16,5 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 #set the default path for built libraries to the "lib" directory
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib/orocos)
 
-rosbuild_add_library(${PROJECT_NAME} src/JointSplineTrajectoryGenerator.cpp)
+rosbuild_add_library(${PROJECT_NAME} src/JointSplineTrajectoryGenerator.cpp src/velocityprofile_spline.cpp)
 

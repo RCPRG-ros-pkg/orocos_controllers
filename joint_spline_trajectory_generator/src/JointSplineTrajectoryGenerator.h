@@ -15,6 +15,9 @@
 #include <rtt/Port.hpp>
 #include <rtt/Property.hpp>
 
+
+#include "velocityprofile_spline.hpp"
+
 #include <trajectory_msgs/JointTrajectoryPoint.h>
 #include "oro_servo_msgs/ServoStates.h"
 #include "oro_servo_msgs/Setpoints.h"
@@ -38,15 +41,10 @@ protected:
 	RTT::Property<int> numberOfJoints_prop;
 private:
 
-	static void getQuinticSplineCoefficients(double start_pos, double start_vel, double start_acc, double end_pos, double end_vel, double end_acc, double time, std::vector<double>& coefficients);
-	static void getCubicSplineCoefficients(double start_pos, double start_vel, double end_pos, double end_vel, double time, std::vector<double>& coefficients);
-
-	void sampleSpline(const std::vector<double>& coeff_, double time_, double& position, double& velocity, double& acceleration);
+	std::vector<KDL::VelocityProfile_Spline> velProfile_;
 
 	trajectory_msgs::JointTrajectoryPoint trajectoryOld;
 	trajectory_msgs::JointTrajectoryPoint trajectoryNew;
-
-	std::vector<std::vector<double> > coeff;
 
   oro_servo_msgs::Setpoints setpoint_;
 

@@ -47,9 +47,7 @@ bool JointSplineTrajectoryGenerator::configureHook()
   trajectoryNew.velocities.reserve(numberOfJoints);
   trajectoryNew.accelerations.reserve(numberOfJoints);
 
-  coeff.resize(numberOfJoints);
-  for (unsigned int i = 0; i < numberOfJoints; i++)
-    coeff[i].resize(6);
+  velProfile_.resize(numberOfJoints);
 
   setpoint_.setpoints.resize(numberOfJoints);
   setpoint_port.setDataSample(setpoint_);
@@ -79,7 +77,11 @@ void JointSplineTrajectoryGenerator::updateHook()
     RTT::Logger::log(RTT::Logger::Debug) << "generating setpoint" << setpoint_.setpoints.size() << RTT::endlog();
 
     for (unsigned int i = 0; i < numberOfJoints; i++)
-      sampleSpline(coeff[i], time * dt, setpoint_.setpoints[i].position, setpoint_.setpoints[i].velocity, setpoint_.setpoints[i].acceleration);
+    {
+      setpoint_.setpoints[i].position = velProfile_[i].Pos(time * dt);
+      setpoint_.setpoints[i].velocity = velProfile_[i].Vel(time * dt);
+      setpoint_.setpoints[i].acceleration = velProfile_[i].Acc(time * dt);
+    }
     setpoint_port.write(setpoint_);
 
     if (time >= endTime)
@@ -94,31 +96,21 @@ void JointSplineTrajectoryGenerator::updateHook()
         {
           if (trajectoryOld.accelerations.size() > 0 && trajectoryNew.accelerations.size() > 0)
           {
-            getQuinticSplineCoefficients(
+            velProfile_[j].SetProfileDuration(
               trajectoryOld.positions[j], trajectoryOld.velocities[j], trajectoryOld.accelerations[j],
               trajectoryNew.positions[j], trajectoryNew.velocities[j], trajectoryNew.accelerations[j],
-              trajectoryNew.time_from_start.toSec(),
-              coeff[j]);
+              trajectoryNew.time_from_start.toSec());
           }
           else if (trajectoryOld.velocities.size() > 0 && trajectoryNew.velocities.size() > 0)
           {
-            getCubicSplineCoefficients(
+            velProfile_[j].SetProfileDuration(
               trajectoryOld.positions[j], trajectoryOld.velocities[j],
               trajectoryNew.positions[j], trajectoryNew.velocities[j],
-              trajectoryNew.time_from_start.toSec(),
-              coeff[j]);
+              trajectoryNew.time_from_start.toSec());;
           }
           else
           {
-            coeff[j][0] = trajectoryOld.positions[j];
-            if (trajectoryNew.time_from_start.toSec() == 0.0)
-              coeff[j][1] = 0.0;
-            else
-              coeff[j][1] = (trajectoryNew.positions[j] - trajectoryOld.positions[j]) / trajectoryNew.time_from_start.toSec();
-            coeff[j][2] = 0.0;
-            coeff[j][3] = 0.0;
-            coeff[j][4] = 0.0;
-            coeff[j][5] = 0.0;
+            velProfile_[j].SetProfileDuration(trajectoryOld.positions[j], trajectoryNew.positions[j], trajectoryNew.time_from_start.toSec());
           }
         }
 
@@ -152,37 +144,26 @@ void JointSplineTrajectoryGenerator::updateHook()
         trajectoryOld.velocities[i] = servo.setpoints[i].velocity;
         trajectoryOld.accelerations[i] = servo.setpoints[i].acceleration;
       }
-      //trajectoryOld.accelerations.resize(0);
       
       for (unsigned int j = 0; j < numberOfJoints; ++j)
       {
         if (trajectoryOld.accelerations.size() > 0 && trajectoryNew.accelerations.size() > 0)
         {
-          getQuinticSplineCoefficients(
+          velProfile_[j].SetProfileDuration(
             trajectoryOld.positions[j], trajectoryOld.velocities[j], trajectoryOld.accelerations[j],
             trajectoryNew.positions[j], trajectoryNew.velocities[j], trajectoryNew.accelerations[j],
-            trajectoryNew.time_from_start.toSec(),
-            coeff[j]);
+            trajectoryNew.time_from_start.toSec());
         }
         else if (trajectoryOld.velocities.size() > 0 && trajectoryNew.velocities.size() > 0)
         {
-          getCubicSplineCoefficients(
+          velProfile_[j].SetProfileDuration(
             trajectoryOld.positions[j], trajectoryOld.velocities[j],
             trajectoryNew.positions[j], trajectoryNew.velocities[j],
-            trajectoryNew.time_from_start.toSec(),
-            coeff[j]);
+            trajectoryNew.time_from_start.toSec());
         }
         else
         {
-          coeff[j][0] = trajectoryOld.positions[j];
-          if (trajectoryNew.time_from_start.toSec() == 0.0)
-            coeff[j][1] = 0.0;
-          else
-            coeff[j][1] = (trajectoryNew.positions[j] - trajectoryOld.positions[j]) / trajectoryNew.time_from_start.toSec();
-          coeff[j][2] = 0.0;
-          coeff[j][3] = 0.0;
-          coeff[j][4] = 0.0;
-          coeff[j][5] = 0.0;
+          velProfile_[j].SetProfileDuration(trajectoryOld.positions[j], trajectoryNew.positions[j], trajectoryNew.time_from_start.toSec());
         }
       }
 
@@ -238,85 +219,6 @@ void JointSplineTrajectoryGenerator::updateHook()
   }
   bufferReady_port.write(bufferReady);
   ++time;
-}
-
-void JointSplineTrajectoryGenerator::getQuinticSplineCoefficients(double start_pos, double start_vel, double start_acc,
-    double end_pos, double end_vel, double end_acc, double time, std::vector<double>& coefficients)
-{
-  coefficients.resize(6);
-
-  if (time == 0.0)
-  {
-    coefficients[0] = end_pos;
-    coefficients[1] = end_vel;
-    coefficients[2] = 0.5*end_acc;
-    coefficients[3] = 0.0;
-    coefficients[4] = 0.0;
-    coefficients[5] = 0.0;
-  }
-  else
-  {
-    double T[6];
-    generatePowers(5, time, T);
-
-    coefficients[0] = start_pos;
-    coefficients[1] = start_vel;
-    coefficients[2] = 0.5*start_acc;
-    coefficients[3] = (-20.0*start_pos + 20.0*end_pos - 3.0*start_acc*T[2] + end_acc*T[2] -
-                       12.0*start_vel*T[1] - 8.0*end_vel*T[1]) / (2.0*T[3]);
-    coefficients[4] = (30.0*start_pos - 30.0*end_pos + 3.0*start_acc*T[2] - 2.0*end_acc*T[2] +
-                       16.0*start_vel*T[1] + 14.0*end_vel*T[1]) / (2.0*T[4]);
-    coefficients[5] = (-12.0*start_pos + 12.0*end_pos - start_acc*T[2] + end_acc*T[2] -
-                       6.0*start_vel*T[1] - 6.0*end_vel*T[1]) / (2.0*T[5]);
-  }
-}
-
-void JointSplineTrajectoryGenerator::getCubicSplineCoefficients(double start_pos, double start_vel,
-    double end_pos, double end_vel, double time, std::vector<double>& coefficients)
-{
-  coefficients.resize(4);
-
-  if (time == 0.0)
-  {
-    coefficients[0] = end_pos;
-    coefficients[1] = end_vel;
-    coefficients[2] = 0.0;
-    coefficients[3] = 0.0;
-  }
-  else
-  {
-    double T[4];
-    generatePowers(3, time, T);
-
-    coefficients[0] = start_pos;
-    coefficients[1] = start_vel;
-    coefficients[2] = (-3.0*start_pos + 3.0*end_pos - 2.0*start_vel*T[1] - end_vel*T[1]) / T[2];
-    coefficients[3] = (2.0*start_pos - 2.0*end_pos + start_vel*T[1] + end_vel*T[1]) / T[3];
-  }
-}
-
-void JointSplineTrajectoryGenerator::sampleSpline(const std::vector<double>& coeff_, double time_, double& position, double& velocity, double& acceleration)
-{
-  double t[6];
-  generatePowers(5, time_, t);
-
-  position = t[0]*coeff_[0] +
-             t[1]*coeff_[1] +
-             t[2]*coeff_[2] +
-             t[3]*coeff_[3] +
-             t[4]*coeff_[4] +
-             t[5]*coeff_[5];
-
-  velocity = t[0]*coeff_[1] +
-             2.0*t[1]*coeff_[2] +
-             3.0*t[2]*coeff_[3] +
-             4.0*t[3]*coeff_[4] +
-             5.0*t[4]*coeff_[5];
-
-  acceleration = 2.0*t[0]*coeff_[2] +
-                 6.0*t[1]*coeff_[3] +
-                 12.0*t[2]*coeff_[4] +
-                 20.0*t[3]*coeff_[5];
 }
 
 ORO_CREATE_COMPONENT( JointSplineTrajectoryGenerator )
