@@ -39,15 +39,6 @@
 
 #include "JointSplineTrajectoryGenerator.h"
 
-static inline void generatePowers(int n, double x, double* powers)
-{
-  powers[0] = 1.0;
-  for (int i=1; i<=n; i++)
-  {
-    powers[i] = powers[i-1]*x;
-  }
-}
-
 JointSplineTrajectoryGenerator::JointSplineTrajectoryGenerator(const std::string& name) : RTT::TaskContext(name, PreOperational), trajectoryPoint_port("trajectory_point"), bufferReady_port("buffer_ready"), setpoint_port("setpoint"), jointState_port("servo_states"), numberOfJoints_prop("number_of_joints", "number of joints used", 0)
 {
   this->ports()->addPort(trajectoryPoint_port);
@@ -104,8 +95,6 @@ void JointSplineTrajectoryGenerator::updateHook()
 
   if (trajectoryReady)
   {
-    RTT::Logger::log(RTT::Logger::Debug) << "generating setpoint" << setpoint_.setpoints.size() << RTT::endlog();
-//    std::cout << "new setpoint : ";
     for (unsigned int i = 0; i < numberOfJoints; i++)
     {
       setpoint_.setpoints[i].position = velProfile_[i].Pos(time * dt);
@@ -115,13 +104,13 @@ void JointSplineTrajectoryGenerator::updateHook()
 
     setpoint_port.write(setpoint_);
 
-    if (time >= endTime)
+    if (time++ >= endTime)
     {
       if (!bufferReady)
       {
         RTT::Logger::log(RTT::Logger::Debug) << "processing trajectory point [trajectory_ready = true]" << RTT::endlog();
 
-        RTT::Logger::log(RTT::Logger::Debug) << "old : p: " << trajectoryOld.positions[0] << " v: " << trajectoryOld.velocities[0] << " new : p: " << trajectoryNew.positions[0] << " v: " << trajectoryNew.velocities[0] << RTT::endlog();
+      //  RTT::Logger::log(RTT::Logger::Debug) << "old : p: " << trajectoryOld.positions[0] << " v: " << trajectoryOld.velocities[0] << " new : p: " << trajectoryNew.positions[0] << " v: " << trajectoryNew.velocities[0] << RTT::endlog();
 
         for (unsigned int j = 0; j < numberOfJoints; ++j)
         {
@@ -186,6 +175,9 @@ void JointSplineTrajectoryGenerator::updateHook()
       {
         if (trajectoryOld.accelerations.size() > 0 && trajectoryNew.accelerations.size() > 0)
         {
+		//  RTT::Logger::log(RTT::Logger::Debug) << "pos " << j << " old : " <<  trajectoryOld.positions[j] << " new : " << trajectoryNew.positions[j] << RTT::endlog();
+		//  RTT::Logger::log(RTT::Logger::Debug) << "vel " << j << " old : " <<  trajectoryOld.velocities[j] << " new : " << trajectoryNew.velocities[j] << RTT::endlog();
+		//  RTT::Logger::log(RTT::Logger::Debug) << "acc " << j << " old : " <<  trajectoryOld.accelerations[j] << " new : " << trajectoryNew.accelerations[j] << RTT::endlog();
           velProfile_[j].SetProfileDuration(
             trajectoryOld.positions[j], trajectoryOld.velocities[j], trajectoryOld.accelerations[j],
             trajectoryNew.positions[j], trajectoryNew.velocities[j], trajectoryNew.accelerations[j],
@@ -193,6 +185,8 @@ void JointSplineTrajectoryGenerator::updateHook()
         }
         else if (trajectoryOld.velocities.size() > 0 && trajectoryNew.velocities.size() > 0)
         {
+		//  RTT::Logger::log(RTT::Logger::Debug) << "pos " << j << " old : " <<  trajectoryOld.positions[j] << " new : " << trajectoryNew.positions[j] << RTT::endlog();
+		 // RTT::Logger::log(RTT::Logger::Debug) << "vel " << j << " old : " <<  trajectoryOld.velocities[j] << " new : " << trajectoryNew.velocities[j] << RTT::endlog();
           velProfile_[j].SetProfileDuration(
             trajectoryOld.positions[j], trajectoryOld.velocities[j],
             trajectoryNew.positions[j], trajectoryNew.velocities[j],
@@ -200,6 +194,7 @@ void JointSplineTrajectoryGenerator::updateHook()
         }
         else
         {
+		//  RTT::Logger::log(RTT::Logger::Debug) << "pos " << j << " old : " <<  trajectoryOld.positions[j] << " new : " << trajectoryNew.positions[j] << RTT::endlog();
           velProfile_[j].SetProfileDuration(trajectoryOld.positions[j], trajectoryNew.positions[j], trajectoryNew.time_from_start.toSec());
         }
       }
@@ -255,7 +250,6 @@ void JointSplineTrajectoryGenerator::updateHook()
 
   }
   bufferReady_port.write(bufferReady);
-  ++time;
 }
 
 ORO_CREATE_COMPONENT( JointSplineTrajectoryGenerator )

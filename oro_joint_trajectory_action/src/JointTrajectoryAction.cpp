@@ -50,7 +50,7 @@ JointTrajectoryAction::JointTrajectoryAction(const std::string& name) :
 {
 
   this->addPort(trajectoryPoint_port);
-  this->addPort(bufferReady_port);
+  this->addEventPort(bufferReady_port);
 
   this->addProperty(numberOfJoints_prop);
 

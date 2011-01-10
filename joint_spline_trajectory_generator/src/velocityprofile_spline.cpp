@@ -43,12 +43,24 @@ void VelocityProfile_Spline::SetProfile(double pos1, double pos2)
 
 void VelocityProfile_Spline::SetProfileDuration(double pos1, double pos2, double duration)
 {
-  coeff_[0] = pos1;
-  coeff_[1] = (pos1 - pos2) / duration;
-  coeff_[2] = 0.0;
-  coeff_[3] = 0.0;
-  coeff_[4] = 0.0;
-  coeff_[5] = 0.0;
+  duration_ = duration;
+  if (duration == 0.0)
+  {
+	coeff_[0] = pos1;
+	coeff_[1] = 0.0;
+	coeff_[2] = 0.0;
+	coeff_[3] = 0.0;
+	coeff_[4] = 0.0;
+	coeff_[5] = 0.0;
+  } else
+  {
+    coeff_[0] = pos1;
+    coeff_[1] = (pos2 - pos1) / duration;
+    coeff_[2] = 0.0;
+    coeff_[3] = 0.0;
+    coeff_[4] = 0.0;
+    coeff_[5] = 0.0;
+  }
 }
 
 void VelocityProfile_Spline::SetProfileDuration(double pos1, double vel1, double pos2, double vel2, double duration)
@@ -57,12 +69,23 @@ void VelocityProfile_Spline::SetProfileDuration(double pos1, double vel1, double
   duration_ = duration;
   generatePowers(3, duration, T);
 
-  coeff_[0] = pos1;
-  coeff_[1] = vel1;
-  coeff_[2] = (-3.0*pos1 + 3.0*pos2 - 2.0*vel1*T[1] - vel2*T[1]) / T[2];
-  coeff_[3] = (2.0*pos1 - 2.0*pos2 + vel1*T[1] + vel2*T[1]) / T[3];
-  coeff_[4] = 0.0;
-  coeff_[5] = 0.0;
+  if (duration == 0.0)
+  {
+	coeff_[0] = pos2;
+	coeff_[1] = vel2;
+	coeff_[2] = 0.0;
+	coeff_[3] = 0.0;
+	coeff_[4] = 0.0;
+	coeff_[5] = 0.0;
+  } else
+  {
+    coeff_[0] = pos1;
+    coeff_[1] = vel1;
+    coeff_[2] = (-3.0*pos1 + 3.0*pos2 - 2.0*vel1*T[1] - vel2*T[1]) / T[2];
+    coeff_[3] = (2.0*pos1 - 2.0*pos2 + vel1*T[1] + vel2*T[1]) / T[3];
+    coeff_[4] = 0.0;
+    coeff_[5] = 0.0;
+  }
 }
 
 void VelocityProfile_Spline::SetProfileDuration(double pos1, double vel1, double acc1, double pos2, double vel2, double acc2, double duration)
@@ -70,15 +93,26 @@ void VelocityProfile_Spline::SetProfileDuration(double pos1, double vel1, double
   double T[6];
   generatePowers(5, duration, T);
 
-  coeff_[0] = pos1;
-  coeff_[1] = vel1;
-  coeff_[2] = 0.5*acc1;
-  coeff_[3] = (-20.0*pos1 + 20.0*pos2 - 3.0*acc1*T[2] + acc2*T[2] -
-                     12.0*vel1*T[1] - 8.0*vel2*T[1]) / (2.0*T[3]);
-  coeff_[4] = (30.0*pos1 - 30.0*pos2 + 3.0*acc1*T[2] - 2.0*acc2*T[2] +
-                     16.0*vel1*T[1] + 14.0*vel2*T[1]) / (2.0*T[4]);
-  coeff_[5] = (-12.0*pos1 + 12.0*pos2 - acc1*T[2] + acc2*T[2] -
-                     6.0*vel1*T[1] - 6.0*vel2*T[1]) / (2.0*T[5]);
+  if (duration == 0.0)
+  {
+	coeff_[0] = pos2;
+	coeff_[1] = vel2;
+	coeff_[2] = 0.5 * acc2;
+	coeff_[3] = 0.0;
+	coeff_[4] = 0.0;
+	coeff_[5] = 0.0;
+  } else
+  {
+    coeff_[0] = pos1;
+    coeff_[1] = vel1;
+    coeff_[2] = 0.5*acc1;
+    coeff_[3] = (-20.0*pos1 + 20.0*pos2 - 3.0*acc1*T[2] + acc2*T[2] -
+                       12.0*vel1*T[1] - 8.0*vel2*T[1]) / (2.0*T[3]);
+    coeff_[4] = (30.0*pos1 - 30.0*pos2 + 3.0*acc1*T[2] - 2.0*acc2*T[2] +
+                       16.0*vel1*T[1] + 14.0*vel2*T[1]) / (2.0*T[4]);
+    coeff_[5] = (-12.0*pos1 + 12.0*pos2 - acc1*T[2] + acc2*T[2] -
+                       6.0*vel1*T[1] - 6.0*vel2*T[1]) / (2.0*T[5]);
+  }
 }
 
 double VelocityProfile_Spline::Duration() const
