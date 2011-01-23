@@ -67,6 +67,7 @@ protected:
 
 	RTT::OutputPort<oro_servo_msgs::Setpoints> setpoint_port;
 	RTT::InputPort<oro_servo_msgs::ServoStates> jointState_port;
+	RTT::OutputPort<bool> trajectoryCompleat_port;
 
 	RTT::Property<int> numberOfJoints_prop;
 private:

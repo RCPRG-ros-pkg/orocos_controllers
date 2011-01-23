@@ -39,12 +39,13 @@
 
 #include "JointSplineTrajectoryGenerator.h"
 
-JointSplineTrajectoryGenerator::JointSplineTrajectoryGenerator(const std::string& name) : RTT::TaskContext(name, PreOperational), trajectoryPoint_port("trajectory_point"), bufferReady_port("buffer_ready"), setpoint_port("setpoint"), jointState_port("servo_states"), numberOfJoints_prop("number_of_joints", "number of joints used", 0)
+JointSplineTrajectoryGenerator::JointSplineTrajectoryGenerator(const std::string& name) : RTT::TaskContext(name, PreOperational), trajectoryPoint_port("trajectory_point"), bufferReady_port("buffer_ready"), setpoint_port("setpoint"), jointState_port("servo_states"),trajectoryCompleat_port("trajectory_compleat"), numberOfJoints_prop("number_of_joints", "number of joints used", 0)
 {
   this->ports()->addPort(trajectoryPoint_port);
   this->ports()->addPort(bufferReady_port);
   this->ports()->addPort(setpoint_port);
   this->ports()->addPort(jointState_port);
+  this->ports()->addPort(trajectoryCompleat_port);
 
   this->addProperty(numberOfJoints_prop);
 }
@@ -143,6 +144,7 @@ void JointSplineTrajectoryGenerator::updateHook()
       else
       {
         trajectoryReady = false;
+        trajectoryCompleat_port.write(true);
       }
     }
   }
@@ -204,8 +206,8 @@ void JointSplineTrajectoryGenerator::updateHook()
       time = 0;
       trajectoryReady = true;
       bufferReady = true;
-      bufferReady_port.write(bufferReady);
     }
+    bufferReady_port.write(bufferReady);
   }
 
   if (trajectoryPoint_port.read(trajectoryNew) == RTT::NewData)
@@ -247,9 +249,7 @@ void JointSplineTrajectoryGenerator::updateHook()
     {
       bufferReady = false;
     }
-
   }
-  bufferReady_port.write(bufferReady);
 }
 
 ORO_CREATE_COMPONENT( JointSplineTrajectoryGenerator )

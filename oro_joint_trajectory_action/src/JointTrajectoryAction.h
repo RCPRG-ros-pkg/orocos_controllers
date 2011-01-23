@@ -49,6 +49,7 @@
 #include <pr2_controllers_msgs/JointTrajectoryAction.h>
 
 #include <trajectory_msgs/JointTrajectoryPoint.h>
+#include <trajectory_msgs/JointTrajectory.h>
 
 class JointTrajectoryAction : public RTT::TaskContext
 {
@@ -68,12 +69,18 @@ protected:
 
     RTT::InputPort<bool> bufferReady_port;
     RTT::Property<int> numberOfJoints_prop;
+
+    RTT::InputPort<trajectory_msgs::JointTrajectory> command_port_;
+    RTT::InputPort<bool> trajectoryCompleat_port;
 private:
 
     void goalCB(GoalHandle gh);
     void cancelCB(GoalHandle gh);
 
-    std::vector<trajectory_msgs::JointTrajectoryPoint  > trajectory;
+    void commandCB();
+    void compleatCB();
+
+    std::vector<trajectory_msgs::JointTrajectoryPoint > trajectory;
     std::vector<std::string> jointNames;
     unsigned int numberOfJoints;
 
