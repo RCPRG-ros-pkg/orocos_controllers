@@ -45,29 +45,27 @@
 #include <rtt/Port.hpp>
 #include <rtt/Property.hpp>
 
-#include "oro_servo_msgs/Setpoints.h"
-#include "oro_servo_msgs/ServoStates.h"
-
 class FakeServo: public RTT::TaskContext {
 public:
-	FakeServo(const std::string& name);
-	virtual ~FakeServo();
+  FakeServo(const std::string& name);
+  virtual ~FakeServo();
 
   bool configureHook();
-	bool startHook();
-	void updateHook();
+  bool startHook();
+  void updateHook();
 protected:
-	RTT::InputPort<oro_servo_msgs::Setpoints> setpoint_port;
-	RTT::OutputPort<oro_servo_msgs::ServoStates> jointState_port;
+  RTT::InputPort<std::vector<double> > jnt_pos_port_;
 
-	RTT::Property<int> numberOfJoints_prop;
+  RTT::OutputPort<std::vector<double> > msr_jnt_pos_port_;
+  RTT::OutputPort<std::vector<double> > cmd_jnt_pos_port_;
+
+  RTT::Property<int> number_of_joints_prop_;
 private:
-  oro_servo_msgs::Setpoints setpoint_;
-  oro_servo_msgs::ServoStates joint_state_;
+  std::vector<double> jnt_pos_;
 
   std::vector<double> initial_pos_;
 
-	unsigned int numberOfJoints_;
+  unsigned int number_of_joints_;
 };
 
 #endif /* FAKESERVO_H_ */

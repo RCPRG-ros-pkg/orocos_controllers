@@ -10,14 +10,15 @@
 #include "FakeServo.h"
 
 FakeServo::FakeServo(const std::string& name) :
-    RTT::TaskContext(name, PreOperational), setpoint_port("setpoint"), jointState_port(
-      "servo_states"), numberOfJoints_prop("number_of_joints", "", 0)
+    RTT::TaskContext(name, PreOperational), jnt_pos_port_("desJntPos"), msr_jnt_pos_port_(
+      "msrJntPos"), cmd_jnt_pos_port_("cmdJntPos"), number_of_joints_prop_("number_of_joints", "", 0)
 {
 
-  this->ports()->addPort(setpoint_port);
-  this->ports()->addPort(jointState_port);
+  this->ports()->addPort(jnt_pos_port_);
+  this->ports()->addPort(msr_jnt_pos_port_);
+  this->ports()->addPort(cmd_jnt_pos_port_);
 
-  this->addProperty(numberOfJoints_prop);
+  this->addProperty(number_of_joints_prop_);
 }
 
 FakeServo::~FakeServo()
@@ -27,10 +28,10 @@ FakeServo::~FakeServo()
 
 bool FakeServo::configureHook()
 {
-  if ((numberOfJoints_ = numberOfJoints_prop.get()) == 0)
+  if ((number_of_joints_ = number_of_joints_prop_.get()) == 0)
     return false;
-  initial_pos_.resize(numberOfJoints_);
-  for (unsigned int i = 0; i < numberOfJoints_; i++)
+  initial_pos_.resize(number_of_joints_);
+  for (unsigned int i = 0; i < number_of_joints_; i++)
   {
     RTT::base::PropertyBase* prop;
     prop = this->getProperty(std::string("joint") + (char) (i + 48) + "_position");
@@ -43,45 +44,23 @@ bool FakeServo::configureHook()
     }
   }
 
-
-  joint_state_.states.resize(numberOfJoints_);
-  joint_state_.setpoints.resize(numberOfJoints_);
-  setpoint_.setpoints.resize(numberOfJoints_);
+  jnt_pos_.resize(number_of_joints_);
   return true;
 }
 
 bool FakeServo::startHook()
 {
+  jnt_pos_ = initial_pos_;
 
-  for (unsigned int i = 0; i < numberOfJoints_; i++)
-  {
-    joint_state_.states[i].position = initial_pos_[i];
-    joint_state_.states[i].velocity = 0.0;
-    joint_state_.states[i].effort = 0.0;
-
-    joint_state_.setpoints[i].position = initial_pos_[i];
-    joint_state_.setpoints[i].velocity = 0.0;
-    joint_state_.setpoints[i].acceleration = 0.0;
-
-  }
   return true;
 }
 
 void FakeServo::updateHook()
 {
-  if (setpoint_port.read(setpoint_) == RTT::NewData)
-  {
-    if (setpoint_.setpoints.size() == numberOfJoints_)
-    {
-      for (unsigned int i = 0; i < numberOfJoints_; i++)
-      {
-        joint_state_.states[i].position = setpoint_.setpoints[i].position;
-        joint_state_.states[i].velocity = setpoint_.setpoints[i].velocity;
-      }
-      joint_state_.setpoints = setpoint_.setpoints;
-    }
-  }
-  jointState_port.write(joint_state_);
+  jnt_pos_port_.read(jnt_pos_);
+
+  cmd_jnt_pos_port_.write(jnt_pos_);
+  msr_jnt_pos_port_.write(jnt_pos_);
 }
 
 ORO_CREATE_COMPONENT( FakeServo )

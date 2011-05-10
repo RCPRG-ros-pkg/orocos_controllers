@@ -10,7 +10,6 @@
   <url>http://ros.org/wiki/joint_spline_trajectory_generator</url>
   <depend package="rtt"/>
   <depend package="ocl"/>
-  <depend package="oro_servo_msgs"/>
   <depend package="rtt_ros_integration_trajectory_msgs"/>
   <depend package="kdl"/>
 </package>

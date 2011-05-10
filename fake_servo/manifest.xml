@@ -10,7 +10,6 @@
   <url>http://ros.org/wiki/fake_servo</url>
   <depend package="rtt"/>
   <depend package="ocl"/>
-  <depend package="oro_servo_msgs"/>
 
 </package>
 

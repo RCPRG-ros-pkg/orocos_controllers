@@ -35,12 +35,12 @@
 #include "JointStatePublisher.hpp"
 
 JointStatePublisher::JointStatePublisher(const std::string& name) :
-    RTT::TaskContext(name, PreOperational), servo_state_port("servo_states"),
-    joint_state_port("joints_state"), number_of_joints_prop("number_of_joints",
+    RTT::TaskContext(name, PreOperational), msr_jnt_pos_port_("msrJntPos"),
+    joint_state_port_("joints_state"), number_of_joints_prop("number_of_joints",
         "number of joints")
 {
-  ports()->addPort(servo_state_port);
-  ports()->addPort(joint_state_port);
+  ports()->addPort(msr_jnt_pos_port_);
+  ports()->addPort(joint_state_port_);
 
   this->addProperty(number_of_joints_prop);
 }
@@ -80,24 +80,24 @@ bool JointStatePublisher::configureHook()
 
 void JointStatePublisher::updateHook()
 {
-  if (servo_state_port.read(servo_state_) == RTT::NewData)
+  if (msr_jnt_pos_port_.read(jnt_pos_) == RTT::NewData)
   {
-    if (servo_state_.states.size() == number_of_joints_)
+    if (jnt_pos_.size() == number_of_joints_)
     {
       joint_state_.header.stamp = ros::Time::now();
       for (unsigned int i = 0; i < number_of_joints_; i++)
       {
-        joint_state_.position[i] = servo_state_.states[i].position;
-        joint_state_.velocity[i] = servo_state_.states[i].velocity;
-        joint_state_.effort[i] = servo_state_.states[i].effort;
+        joint_state_.position[i] = jnt_pos_[i];
+     //   joint_state_.velocity[i] = servo_state_.states[i].velocity;
+      //  joint_state_.effort[i] = servo_state_.states[i].effort;
       }
-      joint_state_port.write(joint_state_);
+      joint_state_port_.write(joint_state_);
     }
     else
     {
       RTT::Logger::log(RTT::Logger::Error)
       << "Received servo state have invalid size (received : "
-      << servo_state_.states.size() << " expected : " << number_of_joints_ << " )"
+      << jnt_pos_.size() << " expected : " << number_of_joints_ << " )"
       << RTT::endlog();
     }
   }

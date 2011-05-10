@@ -45,12 +45,9 @@
 #include <rtt/Port.hpp>
 #include <rtt/Property.hpp>
 
-
 #include "velocityprofile_spline.hpp"
 
 #include <trajectory_msgs/JointTrajectoryPoint.h>
-#include "oro_servo_msgs/ServoStates.h"
-#include "oro_servo_msgs/Setpoints.h"
 
 class JointSplineTrajectoryGenerator : public RTT::TaskContext {
 public:
@@ -62,30 +59,31 @@ public:
 	void updateHook();
 
 protected:
-	RTT::InputPort<trajectory_msgs::JointTrajectoryPoint> trajectoryPoint_port;
-	RTT::OutputPort<bool> bufferReady_port;
+	RTT::InputPort<trajectory_msgs::JointTrajectoryPoint> trajectory_point_port_;
+	RTT::OutputPort<bool> buffer_ready_port_;
 
-	RTT::OutputPort<oro_servo_msgs::Setpoints> setpoint_port;
-	RTT::InputPort<oro_servo_msgs::ServoStates> jointState_port;
-	RTT::OutputPort<bool> trajectoryCompleat_port;
+	RTT::OutputPort<std::vector<double> > jnt_pos_port_;
+	RTT::InputPort<std::vector<double> > cmd_jnt_pos_port_;
 
-	RTT::Property<int> numberOfJoints_prop;
+	RTT::OutputPort<bool> trajectory_compleat_port_;
+
+	RTT::Property<int> number_of_joints_prop_;
 private:
 
-	std::vector<KDL::VelocityProfile_Spline> velProfile_;
+	std::vector<KDL::VelocityProfile_Spline> vel_profile_;
 
-	trajectory_msgs::JointTrajectoryPoint trajectoryOld;
-	trajectory_msgs::JointTrajectoryPoint trajectoryNew;
+	trajectory_msgs::JointTrajectoryPoint trajectory_old_;
+	trajectory_msgs::JointTrajectoryPoint trajectory_new_;
 
-  oro_servo_msgs::Setpoints setpoint_;
+	std::vector<double> des_jnt_pos_;
 
-	unsigned int numberOfJoints;
-	bool trajectoryReady;
-	bool bufferReady;
+	unsigned int number_of_joints_;
+	bool trajectory_ready_;
+	bool buffer_ready_;
 
-	long long int time;
-	long long int endTime;
-	double dt;
+	int64_t time_;
+	int64_t end_time_;
+	double dt_;
 };
 
 #endif /* JOINTSPLINETRAJECTORYGENERATOR_H_ */

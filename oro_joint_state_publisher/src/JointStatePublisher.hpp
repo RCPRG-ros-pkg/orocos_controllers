@@ -39,7 +39,6 @@
 #include <rtt/Property.hpp>
 
 #include "sensor_msgs/JointState.h"
-#include "oro_servo_msgs/ServoStates.h"
 
 class JointStatePublisher : public RTT::TaskContext
 {
@@ -50,13 +49,13 @@ public:
   bool configureHook();
   void updateHook();
 protected:
-  RTT::InputPort<oro_servo_msgs::ServoStates> servo_state_port;
-  RTT::OutputPort<sensor_msgs::JointState> joint_state_port;
+  RTT::InputPort<std::vector<double> > msr_jnt_pos_port_;
+  RTT::OutputPort<sensor_msgs::JointState> joint_state_port_;
 
   RTT::Property<unsigned int> number_of_joints_prop;
 private:
   sensor_msgs::JointState joint_state_;
-  oro_servo_msgs::ServoStates servo_state_;
+  std::vector<double> jnt_pos_;
   unsigned int number_of_joints_;
   std::vector<std::string> names_;
 };

@@ -39,15 +39,15 @@
 
 #include "JointSplineTrajectoryGenerator.h"
 
-JointSplineTrajectoryGenerator::JointSplineTrajectoryGenerator(const std::string& name) : RTT::TaskContext(name, PreOperational), trajectoryPoint_port("trajectory_point"), bufferReady_port("buffer_ready"), setpoint_port("setpoint"), jointState_port("servo_states"),trajectoryCompleat_port("trajectory_compleat"), numberOfJoints_prop("number_of_joints", "number of joints used", 0)
+JointSplineTrajectoryGenerator::JointSplineTrajectoryGenerator(const std::string& name) : RTT::TaskContext(name, PreOperational), trajectory_point_port_("trajectory_point"), buffer_ready_port_("buffer_ready"), jnt_pos_port_("desJntPos"), cmd_jnt_pos_port_("cmdJntPos"), trajectory_compleat_port_("trajectory_compleat"), number_of_joints_prop_("number_of_joints", "number of joints used", 0)
 {
-  this->ports()->addPort(trajectoryPoint_port);
-  this->ports()->addPort(bufferReady_port);
-  this->ports()->addPort(setpoint_port);
-  this->ports()->addPort(jointState_port);
-  this->ports()->addPort(trajectoryCompleat_port);
+  this->ports()->addPort(trajectory_point_port_);
+  this->ports()->addPort(buffer_ready_port_);
+  this->ports()->addPort(jnt_pos_port_);
+  this->ports()->addPort(cmd_jnt_pos_port_);
+  this->ports()->addPort(trajectory_compleat_port_);
 
-  this->addProperty(numberOfJoints_prop);
+  this->addProperty(number_of_joints_prop_);
 }
 
 JointSplineTrajectoryGenerator::~JointSplineTrajectoryGenerator()
@@ -58,23 +58,23 @@ JointSplineTrajectoryGenerator::~JointSplineTrajectoryGenerator()
 bool JointSplineTrajectoryGenerator::configureHook()
 {
 
-  if ((numberOfJoints = numberOfJoints_prop.get()) == 0)
+  if ((number_of_joints_ = number_of_joints_prop_.get()) == 0)
     return false;
 
-  trajectoryOld.positions.reserve(numberOfJoints);
-  trajectoryOld.velocities.reserve(numberOfJoints);
-  trajectoryOld.accelerations.reserve(numberOfJoints);
+  trajectory_old_.positions.reserve(number_of_joints_);
+  trajectory_old_.velocities.reserve(number_of_joints_);
+  trajectory_old_.accelerations.reserve(number_of_joints_);
 
-  trajectoryNew.positions.reserve(numberOfJoints);
-  trajectoryNew.velocities.reserve(numberOfJoints);
-  trajectoryNew.accelerations.reserve(numberOfJoints);
+  trajectory_new_.positions.reserve(number_of_joints_);
+  trajectory_new_.velocities.reserve(number_of_joints_);
+  trajectory_new_.accelerations.reserve(number_of_joints_);
 
-  velProfile_.resize(numberOfJoints);
+  vel_profile_.resize(number_of_joints_);
 
-  setpoint_.setpoints.resize(numberOfJoints);
-  setpoint_port.setDataSample(setpoint_);
+  des_jnt_pos_.resize(number_of_joints_);
+  jnt_pos_port_.setDataSample(des_jnt_pos_);
 
-  dt = this->getPeriod();
+  dt_ = this->getPeriod();
 
   return true;
 }
@@ -82,11 +82,11 @@ bool JointSplineTrajectoryGenerator::configureHook()
 bool JointSplineTrajectoryGenerator::startHook()
 {
 
-  time = 0;
-  trajectoryReady = false;
-  bufferReady = true;
+  time_ = 0;
+  trajectory_ready_ = false;
+  buffer_ready_ = true;
 
-  bufferReady_port.write(bufferReady);
+  buffer_ready_port_.write(buffer_ready_);
 
   return true;
 }
@@ -94,160 +94,160 @@ bool JointSplineTrajectoryGenerator::startHook()
 void JointSplineTrajectoryGenerator::updateHook()
 {
 
-  if (trajectoryReady)
+  if (trajectory_ready_)
   {
-    for (unsigned int i = 0; i < numberOfJoints; i++)
+    for (unsigned int i = 0; i < number_of_joints_; i++)
     {
-      setpoint_.setpoints[i].position = velProfile_[i].Pos(time * dt);
-      setpoint_.setpoints[i].velocity = velProfile_[i].Vel(time * dt);
-      setpoint_.setpoints[i].acceleration = velProfile_[i].Acc(time * dt);
+      des_jnt_pos_[i] = vel_profile_[i].Pos(time_ * dt_);
+     // setpoint_.setpoints[i].velocity = velProfile_[i].Vel(time * dt);
+     // setpoint_.setpoints[i].acceleration = velProfile_[i].Acc(time * dt);
     }
 
-    setpoint_port.write(setpoint_);
+    jnt_pos_port_.write(des_jnt_pos_);
 
-    if (time++ >= endTime)
+    if (time_++ >= end_time_)
     {
-      if (!bufferReady)
+      if (!buffer_ready_)
       {
         RTT::Logger::log(RTT::Logger::Debug) << "processing trajectory point [trajectory_ready = true]" << RTT::endlog();
 
       //  RTT::Logger::log(RTT::Logger::Debug) << "old : p: " << trajectoryOld.positions[0] << " v: " << trajectoryOld.velocities[0] << " new : p: " << trajectoryNew.positions[0] << " v: " << trajectoryNew.velocities[0] << RTT::endlog();
 
-        for (unsigned int j = 0; j < numberOfJoints; ++j)
+        for (unsigned int j = 0; j < number_of_joints_; ++j)
         {
-          if (trajectoryOld.accelerations.size() > 0 && trajectoryNew.accelerations.size() > 0)
+          if (trajectory_old_.accelerations.size() > 0 && trajectory_new_.accelerations.size() > 0)
           {
-            velProfile_[j].SetProfileDuration(
-              trajectoryOld.positions[j], trajectoryOld.velocities[j], trajectoryOld.accelerations[j],
-              trajectoryNew.positions[j], trajectoryNew.velocities[j], trajectoryNew.accelerations[j],
-              trajectoryNew.time_from_start.toSec());
+            vel_profile_[j].SetProfileDuration(
+              trajectory_old_.positions[j], trajectory_old_.velocities[j], trajectory_old_.accelerations[j],
+              trajectory_new_.positions[j], trajectory_new_.velocities[j], trajectory_new_.accelerations[j],
+              trajectory_new_.time_from_start.toSec());
           }
-          else if (trajectoryOld.velocities.size() > 0 && trajectoryNew.velocities.size() > 0)
+          else if (trajectory_old_.velocities.size() > 0 && trajectory_new_.velocities.size() > 0)
           {
-            velProfile_[j].SetProfileDuration(
-              trajectoryOld.positions[j], trajectoryOld.velocities[j],
-              trajectoryNew.positions[j], trajectoryNew.velocities[j],
-              trajectoryNew.time_from_start.toSec());;
+            vel_profile_[j].SetProfileDuration(
+              trajectory_old_.positions[j], trajectory_old_.velocities[j],
+              trajectory_new_.positions[j], trajectory_new_.velocities[j],
+              trajectory_new_.time_from_start.toSec());;
           }
           else
           {
-            velProfile_[j].SetProfileDuration(trajectoryOld.positions[j], trajectoryNew.positions[j], trajectoryNew.time_from_start.toSec());
+            vel_profile_[j].SetProfileDuration(trajectory_old_.positions[j], trajectory_new_.positions[j], trajectory_new_.time_from_start.toSec());
           }
         }
 
-        endTime = trajectoryNew.time_from_start.toSec()/dt;
-        time = 0;
-        trajectoryOld = trajectoryNew;
-        bufferReady = true;
-        bufferReady_port.write(bufferReady);
+        end_time_ = trajectory_new_.time_from_start.toSec()/dt_;
+        time_ = 0;
+        trajectory_old_ = trajectory_new_;
+        buffer_ready_ = true;
+        buffer_ready_port_.write(buffer_ready_);
       }
       else
       {
-        trajectoryReady = false;
-        trajectoryCompleat_port.write(true);
+        trajectory_ready_ = false;
+        trajectory_compleat_port_.write(true);
       }
     }
   }
   else
   {
-    if (!bufferReady)
+    if (!buffer_ready_)
     {
       RTT::Logger::log(RTT::Logger::Debug) << "processing trajectory point [trajectory_ready = false]" << RTT::endlog();
-      oro_servo_msgs::ServoStates servo;
-      jointState_port.read(servo);
+      std::vector<double> servo;
+      cmd_jnt_pos_port_.read(servo);
 
-      trajectoryOld.positions.resize(numberOfJoints);
-      trajectoryOld.velocities.resize(numberOfJoints);
-      trajectoryOld.accelerations.resize(numberOfJoints);
+      trajectory_old_.positions.resize(number_of_joints_);
+      trajectory_old_.velocities.resize(number_of_joints_);
+      trajectory_old_.accelerations.resize(number_of_joints_);
 
-      if(servo.states.size() != numberOfJoints)
+      if(servo.size() != number_of_joints_)
       {
-        std::cout << "servo.states size : " << servo.states.size() << " expected : " << numberOfJoints << std::endl;
+        std::cout << "servo.states size : " << servo.size() << " expected : " << number_of_joints_ << std::endl;
         return ;
       }      
 
-      for (unsigned int i = 0; i < numberOfJoints; i++)
+      for (unsigned int i = 0; i < number_of_joints_; i++)
       {
-        trajectoryOld.positions[i] = servo.setpoints[i].position;
-        trajectoryOld.velocities[i] = servo.setpoints[i].velocity;
-        trajectoryOld.accelerations[i] = servo.setpoints[i].acceleration;
+        trajectory_old_.positions[i] = servo[i];
+        trajectory_old_.velocities[i] = 0.0; //servo.setpoints[i].velocity;
+        trajectory_old_.accelerations[i] = 0.0; // servo.setpoints[i].acceleration;
       }
       
-      for (unsigned int j = 0; j < numberOfJoints; ++j)
+      for (unsigned int j = 0; j < number_of_joints_; ++j)
       {
-        if (trajectoryOld.accelerations.size() > 0 && trajectoryNew.accelerations.size() > 0)
+        if (trajectory_old_.accelerations.size() > 0 && trajectory_new_.accelerations.size() > 0)
         {
 		//  RTT::Logger::log(RTT::Logger::Debug) << "pos " << j << " old : " <<  trajectoryOld.positions[j] << " new : " << trajectoryNew.positions[j] << RTT::endlog();
 		//  RTT::Logger::log(RTT::Logger::Debug) << "vel " << j << " old : " <<  trajectoryOld.velocities[j] << " new : " << trajectoryNew.velocities[j] << RTT::endlog();
 		//  RTT::Logger::log(RTT::Logger::Debug) << "acc " << j << " old : " <<  trajectoryOld.accelerations[j] << " new : " << trajectoryNew.accelerations[j] << RTT::endlog();
-          velProfile_[j].SetProfileDuration(
-            trajectoryOld.positions[j], trajectoryOld.velocities[j], trajectoryOld.accelerations[j],
-            trajectoryNew.positions[j], trajectoryNew.velocities[j], trajectoryNew.accelerations[j],
-            trajectoryNew.time_from_start.toSec());
+          vel_profile_[j].SetProfileDuration(
+            trajectory_old_.positions[j], trajectory_old_.velocities[j], trajectory_old_.accelerations[j],
+            trajectory_new_.positions[j], trajectory_new_.velocities[j], trajectory_new_.accelerations[j],
+            trajectory_new_.time_from_start.toSec());
         }
-        else if (trajectoryOld.velocities.size() > 0 && trajectoryNew.velocities.size() > 0)
+        else if (trajectory_old_.velocities.size() > 0 && trajectory_new_.velocities.size() > 0)
         {
 		//  RTT::Logger::log(RTT::Logger::Debug) << "pos " << j << " old : " <<  trajectoryOld.positions[j] << " new : " << trajectoryNew.positions[j] << RTT::endlog();
 		 // RTT::Logger::log(RTT::Logger::Debug) << "vel " << j << " old : " <<  trajectoryOld.velocities[j] << " new : " << trajectoryNew.velocities[j] << RTT::endlog();
-          velProfile_[j].SetProfileDuration(
-            trajectoryOld.positions[j], trajectoryOld.velocities[j],
-            trajectoryNew.positions[j], trajectoryNew.velocities[j],
-            trajectoryNew.time_from_start.toSec());
+          vel_profile_[j].SetProfileDuration(
+            trajectory_old_.positions[j], trajectory_old_.velocities[j],
+            trajectory_new_.positions[j], trajectory_new_.velocities[j],
+            trajectory_new_.time_from_start.toSec());
         }
         else
         {
 		//  RTT::Logger::log(RTT::Logger::Debug) << "pos " << j << " old : " <<  trajectoryOld.positions[j] << " new : " << trajectoryNew.positions[j] << RTT::endlog();
-          velProfile_[j].SetProfileDuration(trajectoryOld.positions[j], trajectoryNew.positions[j], trajectoryNew.time_from_start.toSec());
+          vel_profile_[j].SetProfileDuration(trajectory_old_.positions[j], trajectory_new_.positions[j], trajectory_new_.time_from_start.toSec());
         }
       }
 
-      trajectoryOld = trajectoryNew;
-      endTime = trajectoryNew.time_from_start.toSec()/dt;
-      time = 0;
-      trajectoryReady = true;
-      bufferReady = true;
+      trajectory_old_ = trajectory_new_;
+      end_time_ = trajectory_new_.time_from_start.toSec()/dt_;
+      time_ = 0;
+      trajectory_ready_ = true;
+      buffer_ready_ = true;
     }
-    bufferReady_port.write(bufferReady);
+    buffer_ready_port_.write(buffer_ready_);
   }
 
-  if (trajectoryPoint_port.read(trajectoryNew) == RTT::NewData)
+  if (trajectory_point_port_.read(trajectory_new_) == RTT::NewData)
   {
     RTT::Logger::log(RTT::Logger::Debug) << "Trajectory point received " << RTT::endlog();
 
-    if (!bufferReady)
+    if (!buffer_ready_)
       RTT::Logger::log(RTT::Logger::Warning) 	<< "Trajectory point buffer not empty overwriteing " << RTT::endlog();
 
-    if (trajectoryNew.positions.size() != numberOfJoints)
+    if (trajectory_new_.positions.size() != number_of_joints_)
     {
       RTT::Logger::log(RTT::Logger::Error) 	<< "Received trajectory point positions size invalid (received: "
-      << trajectoryNew.positions.size()
+      << trajectory_new_.positions.size()
       << " expected: "
-      << numberOfJoints
+      << number_of_joints_
       << ") " << RTT::endlog();
     }
-    else if ((trajectoryNew.velocities.size() != numberOfJoints) && (trajectoryNew.velocities.size() > 0))
+    else if ((trajectory_new_.velocities.size() != number_of_joints_) && (trajectory_new_.velocities.size() > 0))
     {
       RTT::Logger::log(RTT::Logger::Error) 	<< "Received trajectory point velocities size invalid (received: "
-      << trajectoryNew.velocities.size()
+      << trajectory_new_.velocities.size()
       << " expected: "
-      << numberOfJoints
+      << number_of_joints_
       << " or 0) " << RTT::endlog();
     }
-    else if ((trajectoryNew.accelerations.size() != numberOfJoints) && (trajectoryNew.accelerations.size() > 0))
+    else if ((trajectory_new_.accelerations.size() != number_of_joints_) && (trajectory_new_.accelerations.size() > 0))
     {
       RTT::Logger::log(RTT::Logger::Error) 	<< "Received trajectory point accelerations size invalid (received: "
-      << trajectoryNew.accelerations.size()
+      << trajectory_new_.accelerations.size()
       << " expected: "
-      << numberOfJoints
+      << number_of_joints_
       << " or 0) " << RTT::endlog();
     }
-    else if (trajectoryNew.time_from_start.toSec() < 0)
+    else if (trajectory_new_.time_from_start.toSec() < 0)
     {
       RTT::Logger::log(RTT::Logger::Error) 	<< "Received trajectory point time_from_start invalid (<0) " << RTT::endlog();
     }
     else
     {
-      bufferReady = false;
+      buffer_ready_ = false;
     }
   }
 }
