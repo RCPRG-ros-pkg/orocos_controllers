@@ -17,5 +17,3 @@ find_package(Orocos-RTT HINTS ${rtt_PACKAGE_PATH}/install )
 include(${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake)
 
 orocos_component(${PROJECT_NAME} src/FakeServo.cpp)
-
-

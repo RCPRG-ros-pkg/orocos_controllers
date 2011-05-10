@@ -43,6 +43,7 @@
 
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
+#include <rtt/Property.hpp>
 
 #include <oro_action_server.h>
 
