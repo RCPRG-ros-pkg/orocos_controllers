@@ -206,8 +206,9 @@ void JointSplineTrajectoryGenerator::updateHook()
       time_ = 0;
       trajectory_ready_ = true;
       buffer_ready_ = true;
+    } else {
+      buffer_ready_port_.write(buffer_ready_);
     }
-    buffer_ready_port_.write(buffer_ready_);
   }
 
   if (trajectory_point_port_.read(trajectory_new_) == RTT::NewData)
