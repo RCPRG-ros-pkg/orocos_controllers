@@ -1,6 +1,8 @@
 #ifndef VELOCITYPROFILE_SPLINE_H
 #define VELOCITYPROFILE_SPLINE_H
+
 #include "kdl/velocityprofile.hpp"
+
 namespace KDL
 {
 	/**
@@ -13,6 +15,8 @@ public:
     VelocityProfile_Spline();
     VelocityProfile_Spline(const VelocityProfile_Spline &p);
 
+	virtual ~VelocityProfile_Spline();
+	
     virtual void SetProfile(double pos1, double pos2);
     /**
      * Generate linear interpolation coeffcients.

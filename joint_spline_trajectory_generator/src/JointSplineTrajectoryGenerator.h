@@ -51,12 +51,12 @@
 
 class JointSplineTrajectoryGenerator : public RTT::TaskContext {
 public:
-	JointSplineTrajectoryGenerator(const std::string& name);
+	explicit JointSplineTrajectoryGenerator(const std::string& name);
 	virtual ~JointSplineTrajectoryGenerator();
 
-	bool configureHook();
-	bool startHook();
-	void updateHook();
+	virtual bool configureHook();
+	virtual bool startHook();
+	virtual void updateHook();
 
 protected:
 	RTT::InputPort<trajectory_msgs::JointTrajectoryPoint> trajectory_point_port_;

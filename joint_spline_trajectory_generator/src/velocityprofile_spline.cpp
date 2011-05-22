@@ -1,3 +1,6 @@
+
+#include <limits>
+
 #include "velocityprofile_spline.hpp"
 
 namespace KDL {
@@ -9,6 +12,7 @@ static inline void generatePowers(int n, double x, double* powers)
   {
     powers[i] = powers[i-1]*x;
   }
+  return;
 }
 
 VelocityProfile_Spline::VelocityProfile_Spline()
@@ -22,6 +26,7 @@ VelocityProfile_Spline::VelocityProfile_Spline()
   coeff_[4] = 0.0;
   coeff_[5] = 0.0;
 
+  return;
 }
 
 VelocityProfile_Spline::VelocityProfile_Spline(const VelocityProfile_Spline &p)
@@ -34,17 +39,24 @@ VelocityProfile_Spline::VelocityProfile_Spline(const VelocityProfile_Spline &p)
   coeff_[3] = p.coeff_[3];
   coeff_[4] = p.coeff_[4];
   coeff_[5] = p.coeff_[5];
+  
+  return;
+}
+
+VelocityProfile_Spline::~VelocityProfile_Spline()
+{
+	return;
 }
 
 void VelocityProfile_Spline::SetProfile(double pos1, double pos2)
 {
-
+  return;
 }
 
 void VelocityProfile_Spline::SetProfileDuration(double pos1, double pos2, double duration)
 {
   duration_ = duration;
-  if (duration == 0.0)
+  if (duration <= std::numeric_limits<double>::epsilon() )
   {
 	coeff_[0] = pos1;
 	coeff_[1] = 0.0;
@@ -61,6 +73,8 @@ void VelocityProfile_Spline::SetProfileDuration(double pos1, double pos2, double
     coeff_[4] = 0.0;
     coeff_[5] = 0.0;
   }
+  
+  return;
 }
 
 void VelocityProfile_Spline::SetProfileDuration(double pos1, double vel1, double pos2, double vel2, double duration)
@@ -69,7 +83,7 @@ void VelocityProfile_Spline::SetProfileDuration(double pos1, double vel1, double
   duration_ = duration;
   generatePowers(3, duration, T);
 
-  if (duration == 0.0)
+  if (duration <= std::numeric_limits<double>::epsilon() )
   {
 	coeff_[0] = pos2;
 	coeff_[1] = vel2;
@@ -86,6 +100,8 @@ void VelocityProfile_Spline::SetProfileDuration(double pos1, double vel1, double
     coeff_[4] = 0.0;
     coeff_[5] = 0.0;
   }
+  
+  return;
 }
 
 void VelocityProfile_Spline::SetProfileDuration(double pos1, double vel1, double acc1, double pos2, double vel2, double acc2, double duration)
@@ -93,7 +109,7 @@ void VelocityProfile_Spline::SetProfileDuration(double pos1, double vel1, double
   double T[6];
   generatePowers(5, duration, T);
 
-  if (duration == 0.0)
+  if (duration <= std::numeric_limits<double>::epsilon() )
   {
 	coeff_[0] = pos2;
 	coeff_[1] = vel2;
@@ -113,6 +129,8 @@ void VelocityProfile_Spline::SetProfileDuration(double pos1, double vel1, double
     coeff_[5] = (-12.0*pos1 + 12.0*pos2 - acc1*T[2] + acc2*T[2] -
                        6.0*vel1*T[1] - 6.0*vel2*T[1]) / (2.0*T[5]);
   }
+  
+  return;
 }
 
 double VelocityProfile_Spline::Duration() const
@@ -165,6 +183,7 @@ double VelocityProfile_Spline::Acc(double time) const
 void VelocityProfile_Spline::Write(std::ostream& os) const
 {
   os << "coefficients : [ " << coeff_[0] << " " << coeff_[1] << " " << coeff_[2] << " " << coeff_[3] << " " << coeff_[4] << " " << coeff_[5] << " ]";
+  return;
 }
 
 VelocityProfile* VelocityProfile_Spline::Clone() const

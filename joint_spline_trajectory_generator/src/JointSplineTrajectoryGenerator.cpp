@@ -37,6 +37,8 @@
 
 #include <ocl/Component.hpp>
 
+#include <exception>
+
 #include "JointSplineTrajectoryGenerator.h"
 
 JointSplineTrajectoryGenerator::JointSplineTrajectoryGenerator(const std::string& name) : RTT::TaskContext(name, PreOperational), trajectory_point_port_("trajectory_point"), buffer_ready_port_("buffer_ready"), jnt_pos_port_("desJntPos"), cmd_jnt_pos_port_("cmdJntPos"), trajectory_compleat_port_("trajectory_compleat"), number_of_joints_prop_("number_of_joints", "number of joints used", 0)
@@ -48,35 +50,49 @@ JointSplineTrajectoryGenerator::JointSplineTrajectoryGenerator(const std::string
   this->ports()->addPort(trajectory_compleat_port_);
 
   this->addProperty(number_of_joints_prop_);
+  
+  return;
 }
 
 JointSplineTrajectoryGenerator::~JointSplineTrajectoryGenerator()
 {
-
+  return;
 }
 
 bool JointSplineTrajectoryGenerator::configureHook()
 {
+  try
+  {
+	if ((number_of_joints_ = number_of_joints_prop_.get()) > 0)
+      throw std::logic_error("number of joints must be positive");
 
-  if ((number_of_joints_ = number_of_joints_prop_.get()) == 0)
-    return false;
+    trajectory_old_.positions.reserve(number_of_joints_);
+    trajectory_old_.velocities.reserve(number_of_joints_);
+    trajectory_old_.accelerations.reserve(number_of_joints_);
 
-  trajectory_old_.positions.reserve(number_of_joints_);
-  trajectory_old_.velocities.reserve(number_of_joints_);
-  trajectory_old_.accelerations.reserve(number_of_joints_);
+    trajectory_new_.positions.reserve(number_of_joints_);
+    trajectory_new_.velocities.reserve(number_of_joints_);
+    trajectory_new_.accelerations.reserve(number_of_joints_);
 
-  trajectory_new_.positions.reserve(number_of_joints_);
-  trajectory_new_.velocities.reserve(number_of_joints_);
-  trajectory_new_.accelerations.reserve(number_of_joints_);
+    vel_profile_.resize(number_of_joints_);
 
-  vel_profile_.resize(number_of_joints_);
+    des_jnt_pos_.resize(number_of_joints_);
+    jnt_pos_port_.setDataSample(des_jnt_pos_);
 
-  des_jnt_pos_.resize(number_of_joints_);
-  jnt_pos_port_.setDataSample(des_jnt_pos_);
-
-  dt_ = this->getPeriod();
-
-  return true;
+    dt_ = this->getPeriod();
+	
+	return true;
+  }
+  catch (std::exception &e)
+  {
+	  RTT::Logger::log(RTT::Logger::Error) << e.what() << RTT::endlog();
+	  return false;
+  }
+  catch (...)
+  {
+	  RTT::Logger::log(RTT::Logger::Error) << "unknown exception !!!" << RTT::endlog();
+	  return false;
+  }
 }
 
 bool JointSplineTrajectoryGenerator::startHook()
@@ -127,7 +143,7 @@ void JointSplineTrajectoryGenerator::updateHook()
             vel_profile_[j].SetProfileDuration(
               trajectory_old_.positions[j], trajectory_old_.velocities[j],
               trajectory_new_.positions[j], trajectory_new_.velocities[j],
-              trajectory_new_.time_from_start.toSec());;
+              trajectory_new_.time_from_start.toSec());
           }
           else
           {
@@ -251,6 +267,8 @@ void JointSplineTrajectoryGenerator::updateHook()
       buffer_ready_ = false;
     }
   }
+  
+  return;
 }
 
 ORO_CREATE_COMPONENT( JointSplineTrajectoryGenerator )
