@@ -63,7 +63,7 @@ bool JointSplineTrajectoryGenerator::configureHook()
 {
   try
   {
-	if ((number_of_joints_ = number_of_joints_prop_.get()) > 0)
+    if ((number_of_joints_ = number_of_joints_prop_.get()) <= 0)
       throw std::logic_error("number of joints must be positive");
 
     trajectory_old_.positions.reserve(number_of_joints_);
