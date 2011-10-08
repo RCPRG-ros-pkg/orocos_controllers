@@ -5,8 +5,9 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/orocos_controllers</url>
   <depend stack="common_msgs" /> <!-- sensor_msgs -->
-  <depend stack="orocos_toolchain_ros" /> <!-- rtt, rtt_ros_integration, ocl, rtt_ros_integration_std_msgs -->
-  <depend stack="orocos_tools" /> <!-- rtt_ros_integration_sensor_msgs, rtt_ros_integration_trajectory_msgs, rtt_ros_integration_actionlib_msgs, oro_action_server, rtt_ros_integration_geometry_msgs -->
+  <depend stack="geometry" /> <!-- kdl -->
+  <depend stack="rtt_ros_integration" /> <!-- ocl, rtt_ros_integration_geometry_msgs, rtt, rtt_ros_integration_sensor_msgs, rtt_ros_integration, rtt_ros_integration_std_msgs -->
+  <depend stack="orocos_tools" /> <!-- rtt_ros_integration_trajectory_msgs, rtt_ros_integration_actionlib_msgs, oro_action_server -->
   <depend stack="pr2_controllers" /> <!-- pr2_controllers_msgs -->
   <depend stack="ros" />
 

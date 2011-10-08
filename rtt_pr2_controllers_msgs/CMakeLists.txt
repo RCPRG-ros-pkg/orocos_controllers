@@ -11,6 +11,6 @@ set(ROS_BUILD_TYPE MinSizeRel)
 
 rosbuild_init()
 
-rosbuild_include(rtt_ros_integration GenerateRTTtypekit)
+rosbuild_include(rtt_rosnode GenerateRTTtypekit)
 
 ros_generate_rtt_typekit(pr2_controllers_msgs)
