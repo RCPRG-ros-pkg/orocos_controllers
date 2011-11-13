@@ -41,13 +41,16 @@
 #include <string>
 #include <vector>
 
+//#include <boost/shared_ptr.h>
+
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
 #include <rtt/Property.hpp>
 
 #include <oro_action_server.h>
 
-#include <pr2_controllers_msgs/JointTrajectoryAction.h>
+#include <control_msgs/FollowJointTrajectoryAction.h>
+#include <control_msgs/FollowJointTrajectoryActionGoal.h>
 
 #include <trajectory_msgs/JointTrajectoryPoint.h>
 #include <trajectory_msgs/JointTrajectory.h>
@@ -55,9 +58,9 @@
 class JointTrajectoryAction : public RTT::TaskContext
 {
 private:
-    typedef actionlib::ActionServer<pr2_controllers_msgs::JointTrajectoryAction> JTAS;
+    typedef actionlib::ActionServer<control_msgs::FollowJointTrajectoryAction> JTAS;
     typedef JTAS::GoalHandle GoalHandle;
-    typedef boost::shared_ptr<const pr2_controllers_msgs::JointTrajectoryGoal> Goal;
+    typedef boost::shared_ptr<const control_msgs::FollowJointTrajectoryGoal> Goal;
 public:
     JointTrajectoryAction(const std::string& name);
     virtual ~JointTrajectoryAction();
@@ -88,7 +91,7 @@ private:
     unsigned int currentPoint;
     unsigned int endPoint;
 
-    actionlib::ActionServer<pr2_controllers_msgs::JointTrajectoryAction> as;
+    actionlib::ActionServer<control_msgs::FollowJointTrajectoryAction> as;
     bool goal_active;
     GoalHandle activeGoal;
 };

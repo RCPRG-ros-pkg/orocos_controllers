@@ -11,7 +11,7 @@
   <depend package="rtt"/>
   <depend package="ocl"/>
   <depend package="oro_action_server"/>
-  <depend package="rtt_pr2_controllers_msgs"/>
+  <depend package="control_msgs"/>
   <depend package="rtt_trajectory_msgs"/>
 
 </package>
