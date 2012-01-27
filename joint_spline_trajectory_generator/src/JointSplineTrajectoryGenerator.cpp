@@ -41,7 +41,7 @@
 
 #include "JointSplineTrajectoryGenerator.h"
 
-JointSplineTrajectoryGenerator::JointSplineTrajectoryGenerator(const std::string& name) : RTT::TaskContext(name, PreOperational), trajectory_point_port_("trajectory_point"), buffer_ready_port_("buffer_ready"), jnt_pos_port_("desJntPos"), cmd_jnt_pos_port_("cmdJntPos"), trajectory_compleat_port_("trajectory_compleat"), number_of_joints_prop_("number_of_joints", "number of joints used", 0)
+JointSplineTrajectoryGenerator::JointSplineTrajectoryGenerator(const std::string& name) : RTT::TaskContext(name, PreOperational), trajectory_point_port_("trajectory_point"), buffer_ready_port_("buffer_ready"), jnt_pos_port_("cmdJntPos"), cmd_jnt_pos_port_("msrJntPos"), trajectory_compleat_port_("trajectory_compleat"), number_of_joints_prop_("number_of_joints", "number of joints used", 0)
 {
   this->ports()->addPort(trajectory_point_port_);
   this->ports()->addPort(buffer_ready_port_);
@@ -114,9 +114,12 @@ void JointSplineTrajectoryGenerator::updateHook()
   {
     for (unsigned int i = 0; i < number_of_joints_; i++)
     {
-      des_jnt_pos_[i] = vel_profile_[i].Pos(time_ * dt_);
+      des_jnt_pos_[i] = vel_profile_[i].Pos(dt_ * time_);
      // setpoint_.setpoints[i].velocity = velProfile_[i].Vel(time * dt);
      // setpoint_.setpoints[i].acceleration = velProfile_[i].Acc(time * dt);
+     
+     //RTT::Logger::log(RTT::Logger::Debug) << "time = " << time_ << " joint [" << i << "] pos : " << des_jnt_pos_[i] << RTT::endlog();
+     
     }
 
     jnt_pos_port_.write(des_jnt_pos_);
@@ -127,7 +130,7 @@ void JointSplineTrajectoryGenerator::updateHook()
       {
         RTT::Logger::log(RTT::Logger::Debug) << "processing trajectory point [trajectory_ready = true]" << RTT::endlog();
 
-      //  RTT::Logger::log(RTT::Logger::Debug) << "old : p: " << trajectoryOld.positions[0] << " v: " << trajectoryOld.velocities[0] << " new : p: " << trajectoryNew.positions[0] << " v: " << trajectoryNew.velocities[0] << RTT::endlog();
+      //  RTT::Logger::log(RTT::Logger::Debug) << "old : p: " << trajectory_old_.positions[0] << " v: " << trajectory_old_.velocities[0] << " new : p: " << trajectory_new_.positions[0] << " v: " << trajectory_new_.velocities[0] << RTT::endlog();
 
         for (unsigned int j = 0; j < number_of_joints_; ++j)
         {
@@ -155,6 +158,7 @@ void JointSplineTrajectoryGenerator::updateHook()
         time_ = 0;
         trajectory_old_ = trajectory_new_;
         buffer_ready_ = true;
+        //RTT::Logger::log(RTT::Logger::Debug) 	<< "trajectory_ready_ = true buffer_ready = " << buffer_ready_ << RTT::endlog();
         buffer_ready_port_.write(buffer_ready_);
       }
       else
@@ -193,9 +197,9 @@ void JointSplineTrajectoryGenerator::updateHook()
       {
         if (trajectory_old_.accelerations.size() > 0 && trajectory_new_.accelerations.size() > 0)
         {
-		//  RTT::Logger::log(RTT::Logger::Debug) << "pos " << j << " old : " <<  trajectoryOld.positions[j] << " new : " << trajectoryNew.positions[j] << RTT::endlog();
-		//  RTT::Logger::log(RTT::Logger::Debug) << "vel " << j << " old : " <<  trajectoryOld.velocities[j] << " new : " << trajectoryNew.velocities[j] << RTT::endlog();
-		//  RTT::Logger::log(RTT::Logger::Debug) << "acc " << j << " old : " <<  trajectoryOld.accelerations[j] << " new : " << trajectoryNew.accelerations[j] << RTT::endlog();
+		  RTT::Logger::log(RTT::Logger::Debug) << "pos " << j << " old : " <<  trajectory_old_.positions[j] << " new : " << trajectory_new_.positions[j] << RTT::endlog();
+		  RTT::Logger::log(RTT::Logger::Debug) << "vel " << j << " old : " <<  trajectory_old_.velocities[j] << " new : " << trajectory_new_.velocities[j] << RTT::endlog();
+		  RTT::Logger::log(RTT::Logger::Debug) << "acc " << j << " old : " <<  trajectory_old_.accelerations[j] << " new : " << trajectory_new_.accelerations[j] << RTT::endlog();
           vel_profile_[j].SetProfileDuration(
             trajectory_old_.positions[j], trajectory_old_.velocities[j], trajectory_old_.accelerations[j],
             trajectory_new_.positions[j], trajectory_new_.velocities[j], trajectory_new_.accelerations[j],
@@ -203,8 +207,8 @@ void JointSplineTrajectoryGenerator::updateHook()
         }
         else if (trajectory_old_.velocities.size() > 0 && trajectory_new_.velocities.size() > 0)
         {
-		//  RTT::Logger::log(RTT::Logger::Debug) << "pos " << j << " old : " <<  trajectoryOld.positions[j] << " new : " << trajectoryNew.positions[j] << RTT::endlog();
-		 // RTT::Logger::log(RTT::Logger::Debug) << "vel " << j << " old : " <<  trajectoryOld.velocities[j] << " new : " << trajectoryNew.velocities[j] << RTT::endlog();
+		  RTT::Logger::log(RTT::Logger::Debug) << "pos " << j << " old : " <<  trajectory_old_.positions[j] << " new : " << trajectory_new_.positions[j] << RTT::endlog();
+		  RTT::Logger::log(RTT::Logger::Debug) << "vel " << j << " old : " <<  trajectory_old_.velocities[j] << " new : " << trajectory_new_.velocities[j] << RTT::endlog();
           vel_profile_[j].SetProfileDuration(
             trajectory_old_.positions[j], trajectory_old_.velocities[j],
             trajectory_new_.positions[j], trajectory_new_.velocities[j],
@@ -212,10 +216,12 @@ void JointSplineTrajectoryGenerator::updateHook()
         }
         else
         {
-		//  RTT::Logger::log(RTT::Logger::Debug) << "pos " << j << " old : " <<  trajectoryOld.positions[j] << " new : " << trajectoryNew.positions[j] << RTT::endlog();
+		  RTT::Logger::log(RTT::Logger::Debug) << "pos " << j << " old : " <<  trajectory_old_.positions[j] << " new : " << trajectory_new_.positions[j] << RTT::endlog();
           vel_profile_[j].SetProfileDuration(trajectory_old_.positions[j], trajectory_new_.positions[j], trajectory_new_.time_from_start.toSec());
         }
       }
+
+      RTT::Logger::log(RTT::Logger::Debug) << "time : " << trajectory_new_.time_from_start.toSec() << RTT::endlog();
 
       trajectory_old_ = trajectory_new_;
       end_time_ = trajectory_new_.time_from_start.toSec()/dt_;
@@ -223,6 +229,7 @@ void JointSplineTrajectoryGenerator::updateHook()
       trajectory_ready_ = true;
       buffer_ready_ = true;
     }
+  //  RTT::Logger::log(RTT::Logger::Debug) 	<< "trajectory_ready_ = false buffer_ready = " << buffer_ready_ << RTT::endlog();
     buffer_ready_port_.write(buffer_ready_);
     
   }
@@ -265,6 +272,7 @@ void JointSplineTrajectoryGenerator::updateHook()
     else
     {
       buffer_ready_ = false;
+      buffer_ready_port_.write(buffer_ready_);
     }
   }
   
