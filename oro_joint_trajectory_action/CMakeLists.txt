@@ -17,7 +17,7 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib/orocos)
 
 rosbuild_find_ros_package(rtt )
-find_package(Orocos-RTT HINTS ${rtt_PACKAGE_PATH}/install )
+find_package(Orocos-RTT HINTS ${rtt_PACKAGE_PATH}/../install )
 
 # Defines the orocos_* cmake macros. See that file for additional
 # documentation.

@@ -9,7 +9,8 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/fake_servo</url>
   <depend package="rtt"/>
-  <depend package="ocl"/>
+  <depend package="rtt_rosnode"/>
+<!--  <depend package="ocl"/> -->
 
 </package>
 
