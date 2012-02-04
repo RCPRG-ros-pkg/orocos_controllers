@@ -48,7 +48,7 @@ JointTrajectoryAction::JointTrajectoryAction(const std::string& name) :
 {
 
   this->addPort(trajectoryPoint_port);
-  this->addEventPort(bufferReady_port);
+  this->addEventPort(bufferReady_port, boost::bind(&JointTrajectoryAction::bufferReadyCB, this));
   this->addEventPort(command_port_, boost::bind(&JointTrajectoryAction::commandCB, this));
   this->addEventPort(trajectoryCompleat_port, boost::bind(&JointTrajectoryAction::compleatCB, this));
   this->addProperty(numberOfJoints_prop);
@@ -86,23 +86,7 @@ bool JointTrajectoryAction::startHook()
 
 void JointTrajectoryAction::updateHook()
 {
-  bool tmp;
   as.spinOnce();
-
-  if (bufferReady_port.read(tmp) == RTT::NewData)
-  {
-    if (tmp && goal_active)
-    {
-      if (currentPoint < endPoint)
-      {
-        while(trajectory[currentPoint].time_from_start.toSec() < 0.01)
-          ++currentPoint;
-        RTT::Logger::log(RTT::Logger::Debug) << "Sending new point tmp = " << tmp << " goal_active = " << goal_active << " currentPoint = " << currentPoint << RTT::endlog();
-        trajectoryPoint_port.write(trajectory[currentPoint]);
-        ++currentPoint;
-      }
-    }
-  }
 }
 
 void JointTrajectoryAction::goalCB(GoalHandle gh)
@@ -187,15 +171,18 @@ void JointTrajectoryAction::goalCB(GoalHandle gh)
     
     RTT::TaskContext::PeerList peers = this->getPeerList();
     for(size_t i = 0; i < peers.size(); i++)
+    {
+      RTT::Logger::log(RTT::Logger::Debug) << "Starting peer : " << peers[i] << RTT::endlog();
       ok = ok && this->getPeer(peers[i])->start();
-    
+    }
     
     if(ok)
     {
-    gh.setAccepted();
+      gh.setAccepted();
     } else
     {
       gh.setRejected();
+      goal_active = false;
     }
   }
   else
@@ -296,9 +283,30 @@ void JointTrajectoryAction::compleatCB()
     
     RTT::TaskContext::PeerList peers = this->getPeerList();
     for(size_t i = 0; i < peers.size(); i++)
+    {
+      RTT::Logger::log(RTT::Logger::Debug) << "Stoping peer : " << peers[i] << RTT::endlog();
       this->getPeer(peers[i])->stop();
-    
+    }
     RTT::Logger::log(RTT::Logger::Debug) << "Trajectory complete" << RTT::endlog();
+  }
+}
+
+void JointTrajectoryAction::bufferReadyCB()
+{
+  bool tmp;
+  if (bufferReady_port.read(tmp) == RTT::NewData)
+  {
+    if (tmp && goal_active)
+    {
+      if (currentPoint < endPoint)
+      {
+        while(trajectory[currentPoint].time_from_start.toSec() < 0.01)
+          ++currentPoint;
+        RTT::Logger::log(RTT::Logger::Debug) << "Sending new point tmp = " << tmp << " goal_active = " << goal_active << " currentPoint = " << currentPoint << RTT::endlog();
+        trajectoryPoint_port.write(trajectory[currentPoint]);
+        ++currentPoint;
+      }
+    }
   }
 }
 

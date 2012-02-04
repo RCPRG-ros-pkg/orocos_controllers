@@ -83,6 +83,7 @@ private:
 
     void commandCB();
     void compleatCB();
+    void bufferReadyCB();
 
     std::vector<trajectory_msgs::JointTrajectoryPoint > trajectory;
     std::vector<std::string> jointNames;

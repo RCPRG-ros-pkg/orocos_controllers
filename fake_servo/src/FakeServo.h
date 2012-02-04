@@ -54,10 +54,12 @@ public:
   bool startHook();
   void updateHook();
 protected:
-  RTT::InputPort<std::vector<double> > jnt_pos_port_;
+  RTT::InputPort<std::vector<double> > cmd_jnt_pos_port_;
 
   RTT::OutputPort<std::vector<double> > msr_jnt_pos_port_;
-  RTT::OutputPort<std::vector<double> > cmd_jnt_pos_port_;
+  RTT::OutputPort<std::vector<double> > des_jnt_pos_port_;
+
+  RTT::OutputPort<double> command_period_port_;
 
   RTT::Property<int> number_of_joints_prop_;
 private:
@@ -65,6 +67,8 @@ private:
 
   std::vector<double> initial_pos_;
 
+  double dt_;
+  
   unsigned int number_of_joints_;
 };
 
