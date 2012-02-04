@@ -41,13 +41,14 @@
 
 #include "JointSplineTrajectoryGenerator.h"
 
-JointSplineTrajectoryGenerator::JointSplineTrajectoryGenerator(const std::string& name) : RTT::TaskContext(name, PreOperational), trajectory_point_port_("trajectory_point"), buffer_ready_port_("buffer_ready"), jnt_pos_port_("cmdJntPos"), cmd_jnt_pos_port_("msrJntPos"), trajectory_compleat_port_("trajectory_compleat"), number_of_joints_prop_("number_of_joints", "number of joints used", 0)
+JointSplineTrajectoryGenerator::JointSplineTrajectoryGenerator(const std::string& name) : RTT::TaskContext(name, PreOperational), number_of_joints_prop_("number_of_joints", "number of joints used", 0)
 {
-  this->ports()->addPort(trajectory_point_port_);
-  this->ports()->addPort(buffer_ready_port_);
-  this->ports()->addPort(jnt_pos_port_);
-  this->ports()->addPort(cmd_jnt_pos_port_);
-  this->ports()->addPort(trajectory_compleat_port_);
+  this->ports()->addPort("trajectory_point", trajectory_point_port_);
+  this->ports()->addPort("buffer_ready", buffer_ready_port_);
+  this->ports()->addPort("JointPositionCommand", jnt_pos_port_);
+  this->ports()->addPort("DesiredJointPosition", cmd_jnt_pos_port_);
+  this->ports()->addPort("trajectory_compleat", trajectory_compleat_port_);
+  this->ports()->addEventPort("CommandPeriod", command_period_port_);
 
   this->addProperty(number_of_joints_prop_);
   
@@ -78,8 +79,6 @@ bool JointSplineTrajectoryGenerator::configureHook()
 
     des_jnt_pos_.resize(number_of_joints_);
     jnt_pos_port_.setDataSample(des_jnt_pos_);
-
-    dt_ = this->getPeriod();
 	
 	return true;
   }
@@ -98,6 +97,9 @@ bool JointSplineTrajectoryGenerator::configureHook()
 bool JointSplineTrajectoryGenerator::startHook()
 {
 
+//  if(command_period_port_.read(dt_) != RTT::NewData)
+//    return false;
+
   time_ = 0;
   trajectory_ready_ = false;
   buffer_ready_ = true;
@@ -110,6 +112,8 @@ bool JointSplineTrajectoryGenerator::startHook()
 void JointSplineTrajectoryGenerator::updateHook()
 {
 
+  command_period_port_.read(dt_);
+  
   if (trajectory_ready_)
   {
     for (unsigned int i = 0; i < number_of_joints_; i++)

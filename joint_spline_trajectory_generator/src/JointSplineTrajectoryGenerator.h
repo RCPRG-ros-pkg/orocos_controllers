@@ -66,6 +66,8 @@ protected:
 	RTT::InputPort<std::vector<double> > cmd_jnt_pos_port_;
 
 	RTT::OutputPort<bool> trajectory_compleat_port_;
+	
+	RTT::InputPort<double> command_period_port_;
 
 	RTT::Property<int> number_of_joints_prop_;
 private:

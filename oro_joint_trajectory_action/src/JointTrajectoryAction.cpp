@@ -182,8 +182,21 @@ void JointTrajectoryAction::goalCB(GoalHandle gh)
 
     activeGoal = gh;
     goal_active = true;
+    
+    bool ok = true;
+    
+    RTT::TaskContext::PeerList peers = this->getPeerList();
+    for(size_t i = 0; i < peers.size(); i++)
+      ok = ok && this->getPeer(peers[i])->start();
+    
+    
+    if(ok)
+    {
     gh.setAccepted();
-
+    } else
+    {
+      gh.setRejected();
+    }
   }
   else
   {
@@ -280,6 +293,11 @@ void JointTrajectoryAction::compleatCB()
   {
     activeGoal.setSucceeded();
     goal_active = false;
+    
+    RTT::TaskContext::PeerList peers = this->getPeerList();
+    for(size_t i = 0; i < peers.size(); i++)
+      this->getPeer(peers[i])->stop();
+    
     RTT::Logger::log(RTT::Logger::Debug) << "Trajectory complete" << RTT::endlog();
   }
 }
