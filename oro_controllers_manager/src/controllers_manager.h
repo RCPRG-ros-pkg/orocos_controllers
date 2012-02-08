@@ -78,6 +78,7 @@ private:
     
     unsigned int number_of_controllers_;
     int active_controller_;
+    int next_controller_;
     std::vector<std::string> controllers_names_;
     std::vector<boost::shared_ptr<RTT::OutputPort<bool> > > controllers_enable_port_;
     std::vector<boost::shared_ptr<RTT::InputPort<bool> > >controllers_busy_port_;

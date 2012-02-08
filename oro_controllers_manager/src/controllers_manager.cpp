@@ -84,9 +84,9 @@ bool ControllersManager::startHook()
   
   active_controller_ = -1;
   
-  for(size_t i = 0; i < controllers_name_.size(); i++)
+  for(size_t i = 0; i < controllers_names_.size(); i++)
   {
-    if(controllers_name_[i] == default_controller)
+    if(controllers_names_[i] == default_controller)
     {
       active_controller_ = i;
     }
@@ -97,7 +97,7 @@ bool ControllersManager::startHook()
     
   for(size_t i = 0; i < number_of_controllers_; i++)
   {
-    if(i == active_controller)
+    if(i == active_controller_)
     {
       controllers_enable_port_[i]->write(true);
     } else 
@@ -117,7 +117,7 @@ void ControllersManager::updateHook()
   {
     for(size_t i = 0; i < number_of_controllers_; i++)
     {
-      if(i == active_controller)
+      if(i == active_controller_)
       {
         controllers_enable_port_[i]->write(true);
       } else 
@@ -133,11 +133,11 @@ void ControllersManager::updateHook()
     }
     
     bool busy = true;
-    controllers_busy_port_[active_controller_].read(busy);
+    controllers_busy_port_[active_controller_]->read(busy);
     
     if(!busy)
     {
-      active_controller_ = next_controller;
+      active_controller_ = next_controller_;
       activeGoal.setSucceeded();
     }
   }
@@ -152,9 +152,9 @@ void ControllersManager::goalCB(GoalHandle gh)
 
     activeGoal = gh;
  
-    for(size_t i = 0; i < controllers_name_.size(); i++)
+    for(size_t i = 0; i < controllers_names_.size(); i++)
     {
-      if(controllers_name_[i] == g->controller_id)
+      if(controllers_names_[i] == g->controller_id)
       {
         controller = i;
       }
