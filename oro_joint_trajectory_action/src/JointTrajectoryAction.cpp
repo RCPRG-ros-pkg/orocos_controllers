@@ -81,12 +81,16 @@ bool JointTrajectoryAction::configureHook()
 bool JointTrajectoryAction::startHook()
 {
   goal_active = false;
+  enable = true;
   return true;
 }
 
 void JointTrajectoryAction::updateHook()
 {
-  as.spinOnce();
+  if(enable)
+    as.spinOnce();
+    
+  enable = true;
 }
 
 void JointTrajectoryAction::goalCB(GoalHandle gh)
@@ -293,6 +297,8 @@ void JointTrajectoryAction::compleatCB()
 
 void JointTrajectoryAction::bufferReadyCB()
 {
+  enable = false;
+
   bool tmp;
   if (bufferReady_port.read(tmp) == RTT::NewData)
   {
@@ -300,7 +306,7 @@ void JointTrajectoryAction::bufferReadyCB()
     {
       if (currentPoint < endPoint)
       {
-        while(trajectory[currentPoint].time_from_start.toSec() < 0.01)
+        while(trajectory[currentPoint].time_from_start.toSec() < 0.001)
           ++currentPoint;
         RTT::Logger::log(RTT::Logger::Debug) << "Sending new point tmp = " << tmp << " goal_active = " << goal_active << " currentPoint = " << currentPoint << RTT::endlog();
         trajectoryPoint_port.write(trajectory[currentPoint]);

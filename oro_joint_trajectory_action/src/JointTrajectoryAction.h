@@ -95,6 +95,7 @@ private:
     actionlib::ActionServer<control_msgs::FollowJointTrajectoryAction> as;
     bool goal_active;
     GoalHandle activeGoal;
+    bool enable;
 };
 
 #endif /* JOINTTRAJECTORYACTION_H_ */

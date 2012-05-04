@@ -167,6 +167,7 @@ void JointSplineTrajectoryGenerator::updateHook()
       }
       else
       {
+        RTT::Logger::log(RTT::Logger::Debug) << "generator : trajectory compleat" << RTT::endlog();
         trajectory_ready_ = false;
         trajectory_compleat_port_.write(true);
       }
