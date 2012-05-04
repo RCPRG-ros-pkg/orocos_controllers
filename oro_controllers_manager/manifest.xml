@@ -1,0 +1,17 @@
+<package>
+  <description brief="oro_conatroller_manager">
+
+     oro_conatroller_manager
+
+  </description>
+  <author>Konrad Banachowicz</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/oro_conatroller_manager</url>
+  <depend package="oro_action_server"/>
+  <depend package="actionlib_msgs"/>
+  <depend package="rtt"/>
+
+</package>
+
+

@@ -306,8 +306,9 @@ void JointTrajectoryAction::bufferReadyCB()
     {
       if (currentPoint < endPoint)
       {
-        while(trajectory[currentPoint].time_from_start.toSec() < 0.001)
-          ++currentPoint;
+        while(trajectory[currentPoint].time_from_start.toSec() < 0.01)
+          if(!(++currentPoint < endPoint))
+            return;
         RTT::Logger::log(RTT::Logger::Debug) << "Sending new point tmp = " << tmp << " goal_active = " << goal_active << " currentPoint = " << currentPoint << RTT::endlog();
         trajectoryPoint_port.write(trajectory[currentPoint]);
         ++currentPoint;

@@ -1,0 +1,8 @@
+# Define the goal
+string controller_id  # Specify which dishwasher we want to use
+---
+# Define the result
+uint32 error_code
+---
+# Define a feedback message
+
