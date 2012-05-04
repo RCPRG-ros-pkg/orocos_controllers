@@ -16,6 +16,8 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 #set the default path for built libraries to the "lib" directory
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib/orocos)
 
+rosbuild_add_boost_directories()
+
 rosbuild_find_ros_package(rtt )
 find_package(Orocos-RTT HINTS ${rtt_PACKAGE_PATH}/../install )
 
@@ -25,4 +27,5 @@ include(${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake)
 
 #common commands for building c++ executables and libraries
 orocos_component(${PROJECT_NAME} src/JointTrajectoryAction.cpp)
+rosbuild_link_boost(${PROJECT_NAME} thread)
 
