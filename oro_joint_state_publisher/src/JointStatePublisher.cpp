@@ -34,15 +34,17 @@
 
 #include "JointStatePublisher.hpp"
 
+#include "xeno_clock.h"
+
 JointStatePublisher::JointStatePublisher(const std::string& name) :
     RTT::TaskContext(name, PreOperational), msr_jnt_pos_port_("msrJntPos"),
-    joint_state_port_("joints_state"), number_of_joints_prop("number_of_joints",
+    joint_state_port_("joints_state"), joint_names_prop("joint_names",
         "number of joints")
 {
   ports()->addPort(msr_jnt_pos_port_);
   ports()->addPort(joint_state_port_);
 
-  this->addProperty(number_of_joints_prop);
+  this->addProperty(joint_names_prop);
 }
 
 JointStatePublisher::~JointStatePublisher()
@@ -51,19 +53,8 @@ JointStatePublisher::~JointStatePublisher()
 
 bool JointStatePublisher::configureHook()
 {
-  number_of_joints_ = number_of_joints_prop.get();
-
-  names_.resize(number_of_joints_);
-
-  for (unsigned int i = 0; i < number_of_joints_; i++)
-  {
-    names_[i] = ((RTT::Property<std::string>*) this->getProperty(
-                  std::string("joint") + (char) (i + 48) + "_name"))->get();
-  }
-  if (number_of_joints_ != names_.size())
-  {
-    return false;
-  }
+  names_ = joint_names_prop.get();
+  number_of_joints_ = names_.size();
 
   joint_state_.name.resize(number_of_joints_);
   joint_state_.position.resize(number_of_joints_);
@@ -84,7 +75,7 @@ void JointStatePublisher::updateHook()
   {
     if (jnt_pos_.size() == number_of_joints_)
     {
-      joint_state_.header.stamp = ros::Time::now();
+      joint_state_.header.stamp = now();
       for (unsigned int i = 0; i < number_of_joints_; i++)
       {
         joint_state_.position[i] = jnt_pos_[i];

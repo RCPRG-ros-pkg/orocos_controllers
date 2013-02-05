@@ -12,7 +12,12 @@
   <depend package="ocl"/>
   <depend package="rtt_rosnode"/>
   <depend package="rtt_sensor_msgs"/>
+  <depend package="kdl"/>
+  <depend package="geometry_msgs"/>
+  <depend package="rtt_geometry_msgs"/>
+  <depend package="tf_conversions"/>
   <depend package="sensor_msgs"/>
+  <depend package="xeno_clock"/>
 </package>
 
 

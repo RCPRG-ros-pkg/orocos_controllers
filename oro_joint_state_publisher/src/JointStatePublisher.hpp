@@ -52,7 +52,7 @@ protected:
   RTT::InputPort<std::vector<double> > msr_jnt_pos_port_;
   RTT::OutputPort<sensor_msgs::JointState> joint_state_port_;
 
-  RTT::Property<unsigned int> number_of_joints_prop;
+  RTT::Property<std::vector<std::string> > joint_names_prop;
 private:
   sensor_msgs::JointState joint_state_;
   std::vector<double> jnt_pos_;
