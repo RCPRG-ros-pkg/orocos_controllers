@@ -1,0 +1,27 @@
+<package>
+  <name>joint_spline_trajectory_generator</name>
+  <version>2.6.0</version>
+  <description>fake_servo</description>
+  <maintainer email="konradb3@gmail.com">Konrad Banachowicz</maintainer>
+
+  <license>BSD</license>
+
+  <url type="website">http://ros.org/wiki/joint_spline_trajectory_generator</url>
+
+  <author email="konradb3@gmail.com">Konrad Banachowicz</author>
+  
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>rtt</build_depend>
+  <build_depend>rtt_ros</build_depend>
+  <build_depend>xeno_clock</build_depend>
+  <build_depend>trajectory_msgs</build_depend>
+
+  <run_depend>rtt</run_depend>
+  <run_depend>rtt_ros</run_depend>
+  <run_depend>trajectory_msgs</run_depend>
+  
+  <export>
+    <rtt_plugin_depend>rtt_ros</rtt_plugin_depend>
+  </export>
+</package>

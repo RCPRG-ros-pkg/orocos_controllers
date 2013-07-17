@@ -1,19 +1,24 @@
-cmake_minimum_required(VERSION 2.4.6)
-include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
+cmake_minimum_required(VERSION 2.8.3)
 
-# Set the build type.  Options are:
-#  Coverage       : w/ debug symbols, w/o optimization, w/ code-coverage
-#  Debug          : w/ debug symbols, w/o optimization
-#  Release        : w/o debug symbols, w/ optimization
-#  RelWithDebInfo : w/ debug symbols, w/ optimization
-#  MinSizeRel     : w/o debug symbols, w/ optimization, stripped binaries
-set(ROS_BUILD_TYPE RelWithDebInfo)
+project(oro_joint_state_publisher)
 
-rosbuild_init()
+find_package(catkin REQUIRED COMPONENTS rtt_ros sensor_msgs xeno_clock)
 
-rosbuild_find_ros_package(rtt )
-find_package(Orocos-RTT HINTS ${rtt_PACKAGE_PATH}/../install )
+catkin_package(
+  DEPENDS rtt
+  CATKIN_DEPENDS rtt_ros sensor_msgs
+)
 
+find_package(OROCOS-RTT REQUIRED)
+
+include_directories(${catkin_INCLUDE_DIRS})
+
+# Defines the orocos_* cmake macros. See that file for additional
+# documentation.
 include(${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake)
-
+add_definitions(-DRTT_COMPONENT)
 orocos_component(${PROJECT_NAME} src/JointStatePublisher.cpp)
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
+orocos_generate_package()
+
+

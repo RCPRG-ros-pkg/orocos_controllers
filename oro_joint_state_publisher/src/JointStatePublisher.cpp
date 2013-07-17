@@ -34,7 +34,7 @@
 
 #include "JointStatePublisher.hpp"
 
-#include "xeno_clock.h"
+#include "xeno_clock/xeno_clock.h"
 
 JointStatePublisher::JointStatePublisher(const std::string& name) :
     RTT::TaskContext(name, PreOperational), msr_jnt_pos_port_("msrJntPos"),

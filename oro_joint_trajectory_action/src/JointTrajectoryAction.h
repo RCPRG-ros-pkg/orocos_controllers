@@ -47,7 +47,7 @@
 #include <rtt/Port.hpp>
 #include <rtt/Property.hpp>
 
-#include <oro_action_server.h>
+#include <oro_action_server/oro_action_server.h>
 
 #include <control_msgs/FollowJointTrajectoryAction.h>
 #include <control_msgs/FollowJointTrajectoryActionGoal.h>
