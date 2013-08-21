@@ -42,17 +42,20 @@
 JointTrajectoryAction::JointTrajectoryAction(const std::string& name) :
   RTT::TaskContext(name, PreOperational), trajectoryPoint_port("trajectory_point"), bufferReady_port("buffer_ready"),
       numberOfJoints_prop("number_of_joints", "", 0), command_port_("command"),
-      trajectoryCompleat_port("trajectory_compleat"), as(this, "JointTrajectoryAction",
-                                                         boost::bind(&JointTrajectoryAction::goalCB, this, _1),
-                                                         boost::bind(&JointTrajectoryAction::cancelCB, this, _1), true)
+      trajectoryCompleat_port("trajectory_compleat")
 {
+  // Add action server ports to this task's root service
+  as.addPorts(this->provides());
+
+  // Bind action server goal and cancel callbacks (see below)
+  as.registerGoalCallback(boost::bind(&JointTrajectoryAction::goalCB, this, _1));
+  as.registerCancelCallback(boost::bind(&JointTrajectoryAction::cancelCB, this, _1));
 
   this->addPort(trajectoryPoint_port);
   this->addEventPort(bufferReady_port, boost::bind(&JointTrajectoryAction::bufferReadyCB, this));
   this->addEventPort(command_port_, boost::bind(&JointTrajectoryAction::commandCB, this));
   this->addEventPort(trajectoryCompleat_port, boost::bind(&JointTrajectoryAction::compleatCB, this));
   this->addProperty(numberOfJoints_prop);
-
 }
 
 JointTrajectoryAction::~JointTrajectoryAction()
@@ -80,6 +83,7 @@ bool JointTrajectoryAction::configureHook()
 
 bool JointTrajectoryAction::startHook()
 {
+  as.start();
   goal_active = false;
   enable = true;
   return true;
@@ -87,10 +91,6 @@ bool JointTrajectoryAction::startHook()
 
 void JointTrajectoryAction::updateHook()
 {
-  if(enable)
-    as.spinOnce();
-    
-  enable = true;
 }
 
 void JointTrajectoryAction::goalCB(GoalHandle gh)
