@@ -45,6 +45,7 @@ JointStatePublisher::JointStatePublisher(const std::string& name) :
   ports()->addPort(joint_state_port_);
 
   this->addProperty(joint_names_prop);
+  
 }
 
 JointStatePublisher::~JointStatePublisher()
@@ -54,8 +55,10 @@ JointStatePublisher::~JointStatePublisher()
 bool JointStatePublisher::configureHook()
 {
   names_ = joint_names_prop.get();
+  if(names_.empty())
+    return false;
   number_of_joints_ = names_.size();
-
+  
   joint_state_.name.resize(number_of_joints_);
   joint_state_.position.resize(number_of_joints_);
   joint_state_.velocity.resize(number_of_joints_);
