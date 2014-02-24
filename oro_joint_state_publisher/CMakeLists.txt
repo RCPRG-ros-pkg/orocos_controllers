@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 
 project(oro_joint_state_publisher)
 
-find_package(catkin REQUIRED COMPONENTS rtt_ros sensor_msgs xeno_clock)
+find_package(catkin REQUIRED COMPONENTS rtt_ros sensor_msgs rtt_rosclock)
 
 catkin_package(
   DEPENDS rtt

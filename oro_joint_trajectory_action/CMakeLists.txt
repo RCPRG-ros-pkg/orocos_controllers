@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 
 project(oro_joint_trajectory_action)
 
-find_package(catkin REQUIRED COMPONENTS rtt_ros trajectory_msgs control_msgs xeno_clock rtt_actionlib)
+find_package(catkin REQUIRED COMPONENTS rtt_ros trajectory_msgs control_msgs rtt_rosclock rtt_actionlib)
 
 catkin_package(
   DEPENDS rtt

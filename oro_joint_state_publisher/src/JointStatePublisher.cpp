@@ -34,7 +34,7 @@
 
 #include "JointStatePublisher.hpp"
 
-#include "xeno_clock/xeno_clock.h"
+#include "rtt_rosclock/rtt_rosclock.h"
 
 JointStatePublisher::JointStatePublisher(const std::string& name) :
     RTT::TaskContext(name, PreOperational), msr_jnt_pos_port_("msrJntPos"),
@@ -78,7 +78,7 @@ void JointStatePublisher::updateHook()
   {
     if (jnt_pos_.size() == number_of_joints_)
     {
-      joint_state_.header.stamp = now();
+      joint_state_.header.stamp = rtt_rosclock::host_rt_now();
       for (unsigned int i = 0; i < number_of_joints_; i++)
       {
         joint_state_.position[i] = jnt_pos_[i];
