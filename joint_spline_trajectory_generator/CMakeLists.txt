@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 
 project(joint_spline_trajectory_generator)
 
-find_package(catkin REQUIRED COMPONENTS rtt_ros trajectory_msgs xeno_clock)
+find_package(catkin REQUIRED COMPONENTS rtt_ros trajectory_msgs rtt_rosclock)
 
 catkin_package(
   DEPENDS rtt

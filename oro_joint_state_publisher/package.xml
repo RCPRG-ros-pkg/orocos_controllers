@@ -15,7 +15,7 @@
   <build_depend>rtt</build_depend>
   <build_depend>rtt_ros</build_depend>
   <build_depend>sensor_msgs</build_depend>
-  <build_depend>xeno_clock</build_depend>
+  <build_depend>rtt_rosclock</build_depend>
 
   <run_depend>rtt</run_depend>
   <run_depend>rtt_ros</run_depend>
