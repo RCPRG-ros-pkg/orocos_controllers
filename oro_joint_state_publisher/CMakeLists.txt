@@ -4,21 +4,18 @@ project(oro_joint_state_publisher)
 
 find_package(catkin REQUIRED COMPONENTS rtt_ros sensor_msgs xeno_clock)
 
-catkin_package(
-  DEPENDS rtt
-  CATKIN_DEPENDS rtt_ros sensor_msgs
-)
+find_package(Eigen REQUIRED)
 
-find_package(OROCOS-RTT REQUIRED)
-
-include_directories(${catkin_INCLUDE_DIRS})
+include_directories(${catkin_INCLUDE_DIRS} ${Eigen_INCLUDE_DIRS})
 
 # Defines the orocos_* cmake macros. See that file for additional
 # documentation.
-include(${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake)
-add_definitions(-DRTT_COMPONENT)
+
 orocos_component(${PROJECT_NAME} src/JointStatePublisher.cpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
-orocos_generate_package()
+
+orocos_generate_package(
+  DEPENDS rtt_ros sensor_msgs
+)
 
 

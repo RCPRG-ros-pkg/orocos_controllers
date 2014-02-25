@@ -38,6 +38,8 @@
 #include <rtt/Port.hpp>
 #include <rtt/Property.hpp>
 
+#include <Eigen/Dense>
+
 #include "sensor_msgs/JointState.h"
 
 class JointStatePublisher : public RTT::TaskContext
@@ -49,13 +51,17 @@ public:
   bool configureHook();
   void updateHook();
 protected:
-  RTT::InputPort<std::vector<double> > msr_jnt_pos_port_;
+  RTT::InputPort<Eigen::VectorXd > port_joint_position_;
+  RTT::InputPort<Eigen::VectorXd > port_joint_velocity_;
+  RTT::InputPort<Eigen::VectorXd > port_joint_effort_;
   RTT::OutputPort<sensor_msgs::JointState> joint_state_port_;
 
   RTT::Property<std::vector<std::string> > joint_names_prop;
 private:
   sensor_msgs::JointState joint_state_;
-  std::vector<double> jnt_pos_;
+  Eigen::VectorXd joint_position_;
+  Eigen::VectorXd joint_velocity_;
+  Eigen::VectorXd joint_effort_;
   unsigned int number_of_joints_;
   std::vector<std::string> names_;
 };
