@@ -40,6 +40,7 @@
 
 #include <string>
 #include <vector>
+#include <Eigen/Dense>
 
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
@@ -47,7 +48,7 @@
 
 #include "velocityprofile_spline.hpp"
 
-#include <trajectory_msgs/JointTrajectoryPoint.h>
+#include <trajectory_msgs/JointTrajectory.h>
 
 class JointSplineTrajectoryGenerator : public RTT::TaskContext {
 public:
@@ -59,17 +60,11 @@ public:
 	virtual void updateHook();
 
 protected:
-	RTT::InputPort<trajectory_msgs::JointTrajectoryPoint> trajectory_point_port_;
-	RTT::OutputPort<bool> buffer_ready_port_;
+	RTT::InputPort<trajectory_msgs::JointTrajectoryConstPtr> port_trajectory_;
 
-	RTT::OutputPort<std::vector<double> > jnt_pos_port_;
-	RTT::InputPort<std::vector<double> > cmd_jnt_pos_port_;
+	RTT::OutputPort<Eigen::VectorXd > port_joint_position_command_;
+	RTT::InputPort<Eigen::VectorXd > port_joint_position_;
 
-	RTT::OutputPort<bool> trajectory_compleat_port_;
-	
-	RTT::InputPort<double> command_period_port_;
-
-	RTT::Property<int> number_of_joints_prop_;
 private:
 
 	std::vector<KDL::VelocityProfile_Spline> vel_profile_;
@@ -77,15 +72,11 @@ private:
 	trajectory_msgs::JointTrajectoryPoint trajectory_old_;
 	trajectory_msgs::JointTrajectoryPoint trajectory_new_;
 
-	std::vector<double> des_jnt_pos_;
+	Eigen::VectorXd des_jnt_pos_, setpoint_, old_point_;
 
-	unsigned int number_of_joints_;
-	bool trajectory_ready_;
-	bool buffer_ready_;
-
-	int64_t time_;
-	int64_t end_time_;
-	double dt_;
+	trajectory_msgs::JointTrajectoryConstPtr trajectory_;
+	size_t trajectory_ptr_;
+	int number_of_joints_;
 };
 
 #endif /* JOINTSPLINETRAJECTORYGENERATOR_H_ */

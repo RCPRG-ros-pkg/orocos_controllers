@@ -5,8 +5,9 @@ project(joint_spline_trajectory_generator)
 find_package(catkin REQUIRED COMPONENTS rtt_ros trajectory_msgs)
 
 find_package(OROCOS-RTT REQUIRED)
+find_package(Eigen REQUIRED)
 
-include_directories(${catkin_INCLUDE_DIRS})
+include_directories(${catkin_INCLUDE_DIRS} ${Eigen_INCLUDE_DIRS})
 
 orocos_component(${PROJECT_NAME} src/JointSplineTrajectoryGenerator.cpp src/velocityprofile_spline.cpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})

@@ -69,13 +69,11 @@ public:
     bool startHook();
     void updateHook();
 protected:
-    RTT::OutputPort<trajectory_msgs::JointTrajectoryPoint> trajectoryPoint_port;
+    RTT::OutputPort<trajectory_msgs::JointTrajectoryConstPtr> trajectory_ptr_port;
 
-    RTT::InputPort<bool> bufferReady_port;
     RTT::Property<int> numberOfJoints_prop;
 
     RTT::InputPort<trajectory_msgs::JointTrajectory> command_port_;
-    RTT::InputPort<bool> trajectoryCompleat_port;
 private:
 
     void goalCB(GoalHandle gh);
@@ -85,12 +83,8 @@ private:
     void compleatCB();
     void bufferReadyCB();
 
-    std::vector<trajectory_msgs::JointTrajectoryPoint > trajectory;
     std::vector<std::string> jointNames;
     unsigned int numberOfJoints;
-
-    unsigned int currentPoint;
-    unsigned int endPoint;
 
     // RTT action server
     rtt_actionlib::RTTActionServer<control_msgs::FollowJointTrajectoryAction> as;

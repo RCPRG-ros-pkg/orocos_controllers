@@ -40,9 +40,8 @@
 #include "JointTrajectoryAction.h"
 
 JointTrajectoryAction::JointTrajectoryAction(const std::string& name) :
-  RTT::TaskContext(name, PreOperational), trajectoryPoint_port("trajectory_point"), bufferReady_port("buffer_ready"),
-      numberOfJoints_prop("number_of_joints", "", 0), command_port_("command"),
-      trajectoryCompleat_port("trajectory_compleat")
+  RTT::TaskContext(name, PreOperational),
+      numberOfJoints_prop("number_of_joints", "", 0), command_port_("command")
 {
   // Add action server ports to this task's root service
   as.addPorts(this->provides());
@@ -51,11 +50,9 @@ JointTrajectoryAction::JointTrajectoryAction(const std::string& name) :
   as.registerGoalCallback(boost::bind(&JointTrajectoryAction::goalCB, this, _1));
   as.registerCancelCallback(boost::bind(&JointTrajectoryAction::cancelCB, this, _1));
 
-  this->addPort(trajectoryPoint_port);
-  this->addEventPort(bufferReady_port, boost::bind(&JointTrajectoryAction::bufferReadyCB, this));
+  this->addPort("trajectoryPtr", trajectory_ptr_port);
   this->addEventPort(command_port_, boost::bind(&JointTrajectoryAction::commandCB, this));
-  this->addEventPort(trajectoryCompleat_port, boost::bind(&JointTrajectoryAction::compleatCB, this));
-  this->addProperty(numberOfJoints_prop);
+  this->addProperty("joint_names", jointNames);
 }
 
 JointTrajectoryAction::~JointTrajectoryAction()
@@ -65,19 +62,13 @@ JointTrajectoryAction::~JointTrajectoryAction()
 
 bool JointTrajectoryAction::configureHook()
 {
-  if ((numberOfJoints = numberOfJoints_prop.get()) == 0)
+  if (jointNames.size() <= 0)
   {
     return false;
   }
-
-  jointNames.resize(numberOfJoints);
-
-  for (unsigned int i = 0; i < numberOfJoints; i++)
-  {
-    jointNames[i]
-        = ((RTT::Property<std::string>*)this->getProperty(std::string("joint") + (char)(i + 48) + "_name"))->get();
-  }
-
+  
+  numberOfJoints = jointNames.size();
+  
   return true;
 }
 
@@ -99,7 +90,7 @@ void JointTrajectoryAction::goalCB(GoalHandle gh)
   {
     std::vector<int> remapTable;
     remapTable.resize(numberOfJoints);
-
+    trajectory_msgs::JointTrajectory* trj_ptr =  new trajectory_msgs::JointTrajectory;
     Goal g = gh.getGoal();
 
     RTT::Logger::log(RTT::Logger::Debug) << "Received trajectory contain " << g->trajectory.points.size() << " points"
@@ -132,41 +123,32 @@ void JointTrajectoryAction::goalCB(GoalHandle gh)
 
     //remap joints
 
-    trajectory.resize(g->trajectory.points.size());
+    trj_ptr->header = g->trajectory.header;
+    trj_ptr->points.resize(g->trajectory.points.size());
 
     for (unsigned int i = 0; i < g->trajectory.points.size(); i++)
     {
-      trajectory[i].positions.resize(g->trajectory.points[i].positions.size());
+      trj_ptr->points[i].positions.resize(g->trajectory.points[i].positions.size());
       for (unsigned int j = 0; j < g->trajectory.points[i].positions.size(); j++)
       {
-        trajectory[i].positions[j] = g->trajectory.points[i].positions[remapTable[j]];
+        trj_ptr->points[i].positions[j] = g->trajectory.points[i].positions[remapTable[j]];
       }
 
-      trajectory[i].velocities.resize(g->trajectory.points[i].velocities.size());
+      trj_ptr->points[i].velocities.resize(g->trajectory.points[i].velocities.size());
       for (unsigned int j = 0; j < g->trajectory.points[i].velocities.size(); j++)
       {
-        trajectory[i].velocities[j] = g->trajectory.points[i].velocities[remapTable[j]];
+        trj_ptr->points[i].velocities[j] = g->trajectory.points[i].velocities[remapTable[j]];
       }
 
-      trajectory[i].accelerations.resize(g->trajectory.points[i].accelerations.size());
+      trj_ptr->points[i].accelerations.resize(g->trajectory.points[i].accelerations.size());
       for (unsigned int j = 0; j < g->trajectory.points[i].accelerations.size(); j++)
       {
-        trajectory[i].accelerations[j] = g->trajectory.points[i].accelerations[remapTable[j]];
+        trj_ptr->points[i].accelerations[j] = g->trajectory.points[i].accelerations[remapTable[j]];
       }
 
-      if (i == 0)
-      {
-        trajectory[i].time_from_start = g->trajectory.points[i].time_from_start;
-      }
-      else
-      {
-        trajectory[i].time_from_start = g->trajectory.points[i].time_from_start
-            - g->trajectory.points[i - 1].time_from_start;
-      }
+      trj_ptr->points[i].time_from_start = g->trajectory.points[i].time_from_start;
+
     }
-
-    endPoint = g->trajectory.points.size();
-    currentPoint = 0;
 
     activeGoal = gh;
     goal_active = true;
@@ -182,7 +164,12 @@ void JointTrajectoryAction::goalCB(GoalHandle gh)
     
     if(ok)
     {
+      trajectory_msgs::JointTrajectoryConstPtr trj_cptr = trajectory_msgs::JointTrajectoryConstPtr(trj_ptr);
+
+      trajectory_ptr_port.write(trj_cptr);
+    
       gh.setAccepted();
+      goal_active = false;
     } else
     {
       gh.setRejected();
@@ -202,119 +189,7 @@ void JointTrajectoryAction::cancelCB(GoalHandle gh)
 
 void JointTrajectoryAction::commandCB()
 {
-  trajectory_msgs::JointTrajectory trj;
-  if ((command_port_.read(trj) == RTT::NewData)&&(!goal_active))
-  {
-    std::vector<int> remapTable;
-    remapTable.resize(numberOfJoints);
 
-    RTT::Logger::log(RTT::Logger::Debug) << "Received trajectory contain " << trj.points.size() << " points"
-        << RTT::endlog();
-
-    // fill remap table
-    for (unsigned int i = 0; i < numberOfJoints; i++)
-    {
-      int jointId = -1;
-      for (unsigned int j = 0; j < trj.joint_names.size(); j++)
-      {
-        if (trj.joint_names[j] == jointNames[i])
-        {
-          jointId = j;
-          break;
-        }
-      }
-      if (jointId < 0)
-      {
-        RTT::Logger::log(RTT::Logger::Error) << "Trajectory contains invalid joint" << RTT::endlog();
-        return;
-      }
-      else
-      {
-        remapTable[i] = jointId;
-      }
-
-    }
-
-    //remap joints
-
-    trajectory.resize(trj.points.size());
-
-    for (unsigned int i = 0; i < trj.points.size(); i++)
-    {
-      trajectory[i].positions.resize(trj.points[i].positions.size());
-      for (unsigned int j = 0; j < trj.points[i].positions.size(); j++)
-      {
-        trajectory[i].positions[j] = trj.points[i].positions[remapTable[j]];
-      }
-
-      trajectory[i].velocities.resize(trj.points[i].velocities.size());
-      for (unsigned int j = 0; j < trj.points[i].velocities.size(); j++)
-      {
-        trajectory[i].velocities[j] = trj.points[i].velocities[remapTable[j]];
-      }
-
-      trajectory[i].accelerations.resize(trj.points[i].accelerations.size());
-      for (unsigned int j = 0; j < trj.points[i].accelerations.size(); j++)
-      {
-        trajectory[i].accelerations[j] = trj.points[i].accelerations[remapTable[j]];
-      }
-
-      if (i == 0)
-      {
-        trajectory[i].time_from_start = trj.points[i].time_from_start;
-      }
-      else
-      {
-        trajectory[i].time_from_start = trj.points[i].time_from_start
-            - trj.points[i - 1].time_from_start;
-      }
-    }
-
-    endPoint = trj.points.size();
-    currentPoint = 0;
-
-    goal_active = true;
-  }
-
-}
-
-void JointTrajectoryAction::compleatCB()
-{
-  if (goal_active)
-  {
-    activeGoal.setSucceeded();
-    goal_active = false;
-    
-    RTT::TaskContext::PeerList peers = this->getPeerList();
-    for(size_t i = 0; i < peers.size(); i++)
-    {
-      RTT::Logger::log(RTT::Logger::Debug) << "Stoping peer : " << peers[i] << RTT::endlog();
-      this->getPeer(peers[i])->stop();
-    }
-    RTT::Logger::log(RTT::Logger::Debug) << "Trajectory complete" << RTT::endlog();
-  }
-}
-
-void JointTrajectoryAction::bufferReadyCB()
-{
-  enable = false;
-
-  bool tmp;
-  if (bufferReady_port.read(tmp) == RTT::NewData)
-  {
-    if (tmp && goal_active)
-    {
-      if (currentPoint < endPoint)
-      {
-        while(trajectory[currentPoint].time_from_start.toSec() < 0.01)
-          if(!(++currentPoint < endPoint))
-            return;
-        RTT::Logger::log(RTT::Logger::Debug) << "Sending new point tmp = " << tmp << " goal_active = " << goal_active << " currentPoint = " << currentPoint << RTT::endlog();
-        trajectoryPoint_port.write(trajectory[currentPoint]);
-        ++currentPoint;
-      }
-    }
-  }
 }
 
 ORO_CREATE_COMPONENT( JointTrajectoryAction )
