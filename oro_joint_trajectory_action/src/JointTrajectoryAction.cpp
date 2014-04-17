@@ -41,7 +41,7 @@
 
 JointTrajectoryAction::JointTrajectoryAction(const std::string& name) :
   RTT::TaskContext(name, PreOperational),
-      numberOfJoints_prop("number_of_joints", "", 0), command_port_("command")
+      numberOfJoints_prop("number_of_joints", "", 0), command_port_("command"), licznik(0)
 {
   // Add action server ports to this task's root service
   as.addPorts(this->provides());
@@ -51,6 +51,7 @@ JointTrajectoryAction::JointTrajectoryAction(const std::string& name) :
   as.registerCancelCallback(boost::bind(&JointTrajectoryAction::cancelCB, this, _1));
 
   this->addPort("trajectoryPtr", trajectory_ptr_port);
+  this->addPort("JointPosition", port_joint_position_);
   this->addEventPort(command_port_, boost::bind(&JointTrajectoryAction::commandCB, this));
   this->addProperty("joint_names", jointNames);
 }
@@ -82,6 +83,41 @@ bool JointTrajectoryAction::startHook()
 
 void JointTrajectoryAction::updateHook()
 {
+
+
+	// ma sie uruchamiac co 2ms - zaktualizoawc irp6.ops
+
+	  if(port_joint_position_.read(joint_position_) == RTT::NoData) {
+
+	  }
+
+	  if (goal_active) {
+
+		  licznik++;
+
+		  if (licznik==200)
+
+		  {
+			  activeGoal.setSucceeded();
+			  goal_active = false;
+		  }
+
+
+	  }
+
+
+
+	//std::cout << "aqq: " << joint_position_ << std::endl;
+
+//	RTT::Logger::log(RTT::Logger::Error) << "aqq: " << joint_position_ << RTT::endlog();
+
+	// ma sprawdzic czy juz zakonyczl wykonywanie trajektorii - patrzymy czy pozycja zmierzona w stawach jest wystarczajaco blisko pozycji zadanej
+		// dodac port ze zmierzona pozycja
+
+	//jesli zakonczyl interpolacje i jest w pozycji zmieroznej to activeGoal.setsucceded
+	// http://docs.ros.org/hydro/api/actionlib/html/classactionlib_1_1ServerGoalHandle.html
+
+	// jesli nie to nic narazie
 }
 
 void JointTrajectoryAction::goalCB(GoalHandle gh)
@@ -169,7 +205,7 @@ void JointTrajectoryAction::goalCB(GoalHandle gh)
       trajectory_ptr_port.write(trj_cptr);
     
       gh.setAccepted();
-      goal_active = false;
+      goal_active = true;
     } else
     {
       gh.setRejected();

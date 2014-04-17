@@ -40,6 +40,7 @@
 
 #include <string>
 #include <vector>
+#include <Eigen/Dense>
 
 //#include <boost/shared_ptr.h>
 
@@ -74,6 +75,9 @@ protected:
     RTT::Property<int> numberOfJoints_prop;
 
     RTT::InputPort<trajectory_msgs::JointTrajectory> command_port_;
+
+    RTT::InputPort<Eigen::VectorXd > port_joint_position_;
+
 private:
 
     void goalCB(GoalHandle gh);
@@ -85,6 +89,9 @@ private:
 
     std::vector<std::string> jointNames;
     unsigned int numberOfJoints;
+
+	Eigen::VectorXd joint_position_;
+	int licznik;
 
     // RTT action server
     rtt_actionlib::RTTActionServer<control_msgs::FollowJointTrajectoryAction> as;
