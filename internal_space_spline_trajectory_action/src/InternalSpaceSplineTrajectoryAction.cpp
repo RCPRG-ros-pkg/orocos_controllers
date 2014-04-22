@@ -29,7 +29,7 @@
  */
 
 /*
- * JointTrajectoryAction.cpp
+ * InterrnalSpaceTrajectoryAction.cpp
  *
  *  Created on: 23-09-2010
  *      Author: Konrad Banachowicz

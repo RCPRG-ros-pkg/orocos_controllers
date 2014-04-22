@@ -29,7 +29,9 @@
  */
 
 /*
- * JointSplineTrajectoryGenerator.h
+ * InternalSpaceSplineTrajectoryGenerator.h
+ *
+ * Generator for both the motor and joint spline interpolation
  *
  *  Created on: 22-09-2010
  *      Author: Konrad Banachowicz

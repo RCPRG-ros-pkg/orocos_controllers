@@ -29,7 +29,9 @@
  */
 
 /*
- * JointTrajectoryAction.h
+ * InterrnalSpaceTrajectoryAction.h
+ *
+ * Action for both the motor and joint spline interpolation
  *
  *  Created on: 23-09-2010
  *      Author: Konrad Banachowicz

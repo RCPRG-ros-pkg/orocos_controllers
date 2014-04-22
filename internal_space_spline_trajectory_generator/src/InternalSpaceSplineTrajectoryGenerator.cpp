@@ -29,7 +29,7 @@
  */
 
 /*
- * JointSplineTrajectoryGenerator.cpp
+ * InternalSpaceSplineTrajectoryGenerator.cpp
  *
  *  Created on: 22-09-2010
  *      Author: Konrad Banachowicz
