@@ -90,12 +90,13 @@ void InternalSpaceSplineTrajectoryAction::updateHook() {
 	}
 
 	if (goal_active) {
-
+		//	std::cout << "blabla: " << std::endl;
 		ros::Time now = rtt_rosclock::host_rt_now();
 
 		if (now > trajectory_finish_time)
 
 		{
+			//	std::cout << "aaaaaa: " << std::endl;
 			activeGoal.setSucceeded();
 			goal_active = false;
 		}
