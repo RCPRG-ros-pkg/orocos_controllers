@@ -29,17 +29,20 @@
  */
 
 /*
- * JointTrajectoryAction.h
+ * InterrnalSpaceTrajectoryAction.h
+ *
+ * Action for both the motor and joint spline interpolation
  *
  *  Created on: 23-09-2010
  *      Author: Konrad Banachowicz
  */
 
-#ifndef JOINTTRAJECTORYACTION_H_
-#define JOINTTRAJECTORYACTION_H_
+#ifndef INTERNALSPACETRAJECTORYACTION_H_
+#define INTERNALSPACETRAJECTORYACTION_H_
 
 #include <string>
 #include <vector>
+#include <Eigen/Dense>
 
 //#include <boost/shared_ptr.h>
 
@@ -56,14 +59,14 @@
 #include <trajectory_msgs/JointTrajectoryPoint.h>
 #include <trajectory_msgs/JointTrajectory.h>
 
-class JointTrajectoryAction : public RTT::TaskContext
+class InternalSpaceSplineTrajectoryAction : public RTT::TaskContext
 {
 private:
     typedef actionlib::ServerGoalHandle<control_msgs::FollowJointTrajectoryAction> GoalHandle;
     typedef boost::shared_ptr<const control_msgs::FollowJointTrajectoryGoal> Goal;
 public:
-    JointTrajectoryAction(const std::string& name);
-    virtual ~JointTrajectoryAction();
+    InternalSpaceSplineTrajectoryAction(const std::string& name);
+    virtual ~InternalSpaceSplineTrajectoryAction();
 
     bool configureHook();
     bool startHook();
@@ -74,6 +77,9 @@ protected:
     RTT::Property<int> numberOfJoints_prop;
 
     RTT::InputPort<trajectory_msgs::JointTrajectory> command_port_;
+
+    RTT::InputPort<Eigen::VectorXd > port_joint_position_;
+
 private:
 
     void goalCB(GoalHandle gh);
@@ -86,6 +92,11 @@ private:
     std::vector<std::string> jointNames;
     unsigned int numberOfJoints;
 
+	Eigen::VectorXd joint_position_;
+
+	ros::Time trajectory_finish_time;
+
+
     // RTT action server
     rtt_actionlib::RTTActionServer<control_msgs::FollowJointTrajectoryAction> as;
     bool goal_active;
@@ -93,4 +104,4 @@ private:
     bool enable;
 };
 
-#endif /* JOINTTRAJECTORYACTION_H_ */
+#endif /* INTERNALSPACETRAJECTORYACTION_H_ */

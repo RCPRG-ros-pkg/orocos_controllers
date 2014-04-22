@@ -29,7 +29,7 @@
  */
 
 /*
- * JointSplineTrajectoryGenerator.cpp
+ * InternalSpaceSplineTrajectoryGenerator.cpp
  *
  *  Created on: 22-09-2010
  *      Author: Konrad Banachowicz
@@ -39,25 +39,25 @@
 
 #include <exception>
 #include "rtt_rosclock/rtt_rosclock.h"
-#include "JointSplineTrajectoryGenerator.h"
+#include "InternalSpaceSplineTrajectoryGenerator.h"
 
-JointSplineTrajectoryGenerator::JointSplineTrajectoryGenerator(const std::string& name) : RTT::TaskContext(name, PreOperational)
+InternalSpaceSplineTrajectoryGenerator::InternalSpaceSplineTrajectoryGenerator(const std::string& name) : RTT::TaskContext(name, PreOperational)
 {
   this->ports()->addPort("trajectoryPtr", port_trajectory_);
-  this->ports()->addPort("JointPositionCommand", port_joint_position_command_);
-  this->ports()->addPort("JointPosition", port_joint_position_);
+  this->ports()->addPort("JointPositionCommand", port_internal_space_position_command_);
+  this->ports()->addPort("JointPosition", port_internal_space_position_measurement_);
 
   this->addProperty("number_of_joints", number_of_joints_);
   
   return;
 }
 
-JointSplineTrajectoryGenerator::~JointSplineTrajectoryGenerator()
+InternalSpaceSplineTrajectoryGenerator::~InternalSpaceSplineTrajectoryGenerator()
 {
   return;
 }
 
-bool JointSplineTrajectoryGenerator::configureHook()
+bool InternalSpaceSplineTrajectoryGenerator::configureHook()
 {
   try
   {
@@ -67,7 +67,7 @@ bool JointSplineTrajectoryGenerator::configureHook()
     vel_profile_.resize(number_of_joints_);
 
     des_jnt_pos_.resize(number_of_joints_);
-    port_joint_position_command_.setDataSample(des_jnt_pos_);
+    port_internal_space_position_command_.setDataSample(des_jnt_pos_);
 	
     return true;
   }
@@ -83,14 +83,14 @@ bool JointSplineTrajectoryGenerator::configureHook()
   }
 }
 
-bool JointSplineTrajectoryGenerator::startHook() {
-  if(port_joint_position_.read(setpoint_) == RTT::NoData) {
+bool InternalSpaceSplineTrajectoryGenerator::startHook() {
+  if(port_internal_space_position_measurement_.read(setpoint_) == RTT::NoData) {
     return false;
   }
   return true;
 }
 
-void JointSplineTrajectoryGenerator::updateHook() {
+void InternalSpaceSplineTrajectoryGenerator::updateHook() {
   if (port_trajectory_.read(trajectory_) == RTT::NewData) {
     trajectory_ptr_ = 0;
     old_point_ = setpoint_;
@@ -155,8 +155,8 @@ void JointSplineTrajectoryGenerator::updateHook() {
     }
   }
   
-  port_joint_position_command_.write(setpoint_);  
+  port_internal_space_position_command_.write(setpoint_);
 }
 
-ORO_CREATE_COMPONENT( JointSplineTrajectoryGenerator )
+ORO_CREATE_COMPONENT( InternalSpaceSplineTrajectoryGenerator )
 

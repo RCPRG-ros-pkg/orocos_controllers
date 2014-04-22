@@ -29,14 +29,16 @@
  */
 
 /*
- * JointSplineTrajectoryGenerator.h
+ * InternalSpaceSplineTrajectoryGenerator.h
+ *
+ * Generator for both the motor and joint spline interpolation
  *
  *  Created on: 22-09-2010
  *      Author: Konrad Banachowicz
  */
 
-#ifndef JOINTSPLINETRAJECTORYGENERATOR_H_
-#define JOINTSPLINETRAJECTORYGENERATOR_H_
+#ifndef INTERNALSPACESPLINETRAJECTORYGENERATOR_H_
+#define INTERNALSPACESPLINETRAJECTORYGENERATOR_H_
 
 #include <string>
 #include <vector>
@@ -50,10 +52,10 @@
 
 #include <trajectory_msgs/JointTrajectory.h>
 
-class JointSplineTrajectoryGenerator : public RTT::TaskContext {
+class InternalSpaceSplineTrajectoryGenerator : public RTT::TaskContext {
 public:
-	explicit JointSplineTrajectoryGenerator(const std::string& name);
-	virtual ~JointSplineTrajectoryGenerator();
+	explicit InternalSpaceSplineTrajectoryGenerator(const std::string& name);
+	virtual ~InternalSpaceSplineTrajectoryGenerator();
 
 	virtual bool configureHook();
 	virtual bool startHook();
@@ -62,8 +64,8 @@ public:
 protected:
 	RTT::InputPort<trajectory_msgs::JointTrajectoryConstPtr> port_trajectory_;
 
-	RTT::OutputPort<Eigen::VectorXd > port_joint_position_command_;
-	RTT::InputPort<Eigen::VectorXd > port_joint_position_;
+	RTT::OutputPort<Eigen::VectorXd > port_internal_space_position_command_;
+	RTT::InputPort<Eigen::VectorXd > port_internal_space_position_measurement_;
 
 private:
 
@@ -79,4 +81,4 @@ private:
 	int number_of_joints_;
 };
 
-#endif /* JOINTSPLINETRAJECTORYGENERATOR_H_ */
+#endif /* INTERNALSPACESPLINETRAJECTORYGENERATOR_H_ */
