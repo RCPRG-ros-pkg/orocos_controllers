@@ -1,12 +1,12 @@
 <package>
-  <name>joint_spline_trajectory_generator</name>
+  <name>internal_space_spline_trajectory_generator</name>
   <version>2.6.0</version>
   <description>fake_servo</description>
   <maintainer email="konradb3@gmail.com">Konrad Banachowicz</maintainer>
 
   <license>BSD</license>
 
-  <url type="website">http://ros.org/wiki/joint_spline_trajectory_generator</url>
+  <url type="website">http://ros.org/wiki/internal_space_spline_trajectory_generator</url>
 
   <author email="konradb3@gmail.com">Konrad Banachowicz</author>
   

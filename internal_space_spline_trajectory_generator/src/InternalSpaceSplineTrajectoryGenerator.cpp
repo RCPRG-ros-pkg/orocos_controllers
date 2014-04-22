@@ -39,9 +39,9 @@
 
 #include <exception>
 #include "rtt_rosclock/rtt_rosclock.h"
-#include "JointSplineTrajectoryGenerator.h"
+#include "InternalSpaceSplineTrajectoryGenerator.h"
 
-JointSplineTrajectoryGenerator::JointSplineTrajectoryGenerator(const std::string& name) : RTT::TaskContext(name, PreOperational)
+InternalSpaceSplineTrajectoryGenerator::InternalSpaceSplineTrajectoryGenerator(const std::string& name) : RTT::TaskContext(name, PreOperational)
 {
   this->ports()->addPort("trajectoryPtr", port_trajectory_);
   this->ports()->addPort("JointPositionCommand", port_joint_position_command_);
@@ -52,12 +52,12 @@ JointSplineTrajectoryGenerator::JointSplineTrajectoryGenerator(const std::string
   return;
 }
 
-JointSplineTrajectoryGenerator::~JointSplineTrajectoryGenerator()
+InternalSpaceSplineTrajectoryGenerator::~InternalSpaceSplineTrajectoryGenerator()
 {
   return;
 }
 
-bool JointSplineTrajectoryGenerator::configureHook()
+bool InternalSpaceSplineTrajectoryGenerator::configureHook()
 {
   try
   {
@@ -83,14 +83,14 @@ bool JointSplineTrajectoryGenerator::configureHook()
   }
 }
 
-bool JointSplineTrajectoryGenerator::startHook() {
+bool InternalSpaceSplineTrajectoryGenerator::startHook() {
   if(port_joint_position_.read(setpoint_) == RTT::NoData) {
     return false;
   }
   return true;
 }
 
-void JointSplineTrajectoryGenerator::updateHook() {
+void InternalSpaceSplineTrajectoryGenerator::updateHook() {
   if (port_trajectory_.read(trajectory_) == RTT::NewData) {
     trajectory_ptr_ = 0;
     old_point_ = setpoint_;
@@ -158,5 +158,5 @@ void JointSplineTrajectoryGenerator::updateHook() {
   port_joint_position_command_.write(setpoint_);  
 }
 
-ORO_CREATE_COMPONENT( JointSplineTrajectoryGenerator )
+ORO_CREATE_COMPONENT( InternalSpaceSplineTrajectoryGenerator )
 

@@ -50,10 +50,10 @@
 
 #include <trajectory_msgs/JointTrajectory.h>
 
-class JointSplineTrajectoryGenerator : public RTT::TaskContext {
+class InternalSpaceSplineTrajectoryGenerator : public RTT::TaskContext {
 public:
-	explicit JointSplineTrajectoryGenerator(const std::string& name);
-	virtual ~JointSplineTrajectoryGenerator();
+	explicit InternalSpaceSplineTrajectoryGenerator(const std::string& name);
+	virtual ~InternalSpaceSplineTrajectoryGenerator();
 
 	virtual bool configureHook();
 	virtual bool startHook();
