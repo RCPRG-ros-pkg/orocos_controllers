@@ -37,9 +37,9 @@
 
 #include <ocl/Component.hpp>
 
-#include "JointTrajectoryAction.h"
+#include "InternalSpaceSplineTrajectoryAction.h"
 
-JointTrajectoryAction::JointTrajectoryAction(const std::string& name) :
+InternalSpaceSplineTrajectoryAction::InternalSpaceSplineTrajectoryAction(const std::string& name) :
   RTT::TaskContext(name, PreOperational),
       numberOfJoints_prop("number_of_joints", "", 0), command_port_("command"), licznik(0)
 {
@@ -47,21 +47,21 @@ JointTrajectoryAction::JointTrajectoryAction(const std::string& name) :
   as.addPorts(this->provides());
 
   // Bind action server goal and cancel callbacks (see below)
-  as.registerGoalCallback(boost::bind(&JointTrajectoryAction::goalCB, this, _1));
-  as.registerCancelCallback(boost::bind(&JointTrajectoryAction::cancelCB, this, _1));
+  as.registerGoalCallback(boost::bind(&InternalSpaceSplineTrajectoryAction::goalCB, this, _1));
+  as.registerCancelCallback(boost::bind(&InternalSpaceSplineTrajectoryAction::cancelCB, this, _1));
 
   this->addPort("trajectoryPtr", trajectory_ptr_port);
   this->addPort("JointPosition", port_joint_position_);
-  this->addEventPort(command_port_, boost::bind(&JointTrajectoryAction::commandCB, this));
+  this->addEventPort(command_port_, boost::bind(&InternalSpaceSplineTrajectoryAction::commandCB, this));
   this->addProperty("joint_names", jointNames);
 }
 
-JointTrajectoryAction::~JointTrajectoryAction()
+InternalSpaceSplineTrajectoryAction::~InternalSpaceSplineTrajectoryAction()
 {
 
 }
 
-bool JointTrajectoryAction::configureHook()
+bool InternalSpaceSplineTrajectoryAction::configureHook()
 {
   if (jointNames.size() <= 0)
   {
@@ -73,7 +73,7 @@ bool JointTrajectoryAction::configureHook()
   return true;
 }
 
-bool JointTrajectoryAction::startHook()
+bool InternalSpaceSplineTrajectoryAction::startHook()
 {
   as.start();
   goal_active = false;
@@ -81,7 +81,7 @@ bool JointTrajectoryAction::startHook()
   return true;
 }
 
-void JointTrajectoryAction::updateHook()
+void InternalSpaceSplineTrajectoryAction::updateHook()
 {
 
 
@@ -120,7 +120,7 @@ void JointTrajectoryAction::updateHook()
 	// jesli nie to nic narazie
 }
 
-void JointTrajectoryAction::goalCB(GoalHandle gh)
+void InternalSpaceSplineTrajectoryAction::goalCB(GoalHandle gh)
 {
   if (!goal_active)
   {
@@ -218,14 +218,14 @@ void JointTrajectoryAction::goalCB(GoalHandle gh)
   }
 }
 
-void JointTrajectoryAction::cancelCB(GoalHandle gh)
+void InternalSpaceSplineTrajectoryAction::cancelCB(GoalHandle gh)
 {
   goal_active = false;
 }
 
-void JointTrajectoryAction::commandCB()
+void InternalSpaceSplineTrajectoryAction::commandCB()
 {
 
 }
 
-ORO_CREATE_COMPONENT( JointTrajectoryAction )
+ORO_CREATE_COMPONENT( InternalSpaceSplineTrajectoryAction )

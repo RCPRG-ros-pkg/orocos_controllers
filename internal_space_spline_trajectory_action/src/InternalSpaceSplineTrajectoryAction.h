@@ -35,8 +35,8 @@
  *      Author: Konrad Banachowicz
  */
 
-#ifndef JOINTTRAJECTORYACTION_H_
-#define JOINTTRAJECTORYACTION_H_
+#ifndef INTERNALSPACETRAJECTORYACTION_H_
+#define INTERNALSPACETRAJECTORYACTION_H_
 
 #include <string>
 #include <vector>
@@ -57,14 +57,14 @@
 #include <trajectory_msgs/JointTrajectoryPoint.h>
 #include <trajectory_msgs/JointTrajectory.h>
 
-class JointTrajectoryAction : public RTT::TaskContext
+class InternalSpaceSplineTrajectoryAction : public RTT::TaskContext
 {
 private:
     typedef actionlib::ServerGoalHandle<control_msgs::FollowJointTrajectoryAction> GoalHandle;
     typedef boost::shared_ptr<const control_msgs::FollowJointTrajectoryGoal> Goal;
 public:
-    JointTrajectoryAction(const std::string& name);
-    virtual ~JointTrajectoryAction();
+    InternalSpaceSplineTrajectoryAction(const std::string& name);
+    virtual ~InternalSpaceSplineTrajectoryAction();
 
     bool configureHook();
     bool startHook();
@@ -100,4 +100,4 @@ private:
     bool enable;
 };
 
-#endif /* JOINTTRAJECTORYACTION_H_ */
+#endif /* INTERNALSPACETRAJECTORYACTION_H_ */

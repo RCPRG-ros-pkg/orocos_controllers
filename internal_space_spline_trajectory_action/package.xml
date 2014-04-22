@@ -1,12 +1,12 @@
 <package>
-  <name>oro_joint_trajectory_action</name>
+  <name>internal_space_spline_trajectory_action</name>
   <version>2.6.0</version>
   <description>fake_servo</description>
   <maintainer email="konradb3@gmail.com">Konrad Banachowicz</maintainer>
 
   <license>BSD</license>
 
-  <url type="website">http://ros.org/wiki/oro_joint_trajectory_action</url>
+  <url type="website">http://ros.org/wiki/internal_space_spline_trajectory_action</url>
 
   <author email="konradb3@gmail.com">Konrad Banachowicz</author>
   

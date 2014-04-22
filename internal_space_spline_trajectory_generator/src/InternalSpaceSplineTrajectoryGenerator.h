@@ -35,8 +35,8 @@
  *      Author: Konrad Banachowicz
  */
 
-#ifndef JOINTSPLINETRAJECTORYGENERATOR_H_
-#define JOINTSPLINETRAJECTORYGENERATOR_H_
+#ifndef INTERNALSPACESPLINETRAJECTORYGENERATOR_H_
+#define INTERNALSPACESPLINETRAJECTORYGENERATOR_H_
 
 #include <string>
 #include <vector>
@@ -79,4 +79,4 @@ private:
 	int number_of_joints_;
 };
 
-#endif /* JOINTSPLINETRAJECTORYGENERATOR_H_ */
+#endif /* INTERNALSPACESPLINETRAJECTORYGENERATOR_H_ */
