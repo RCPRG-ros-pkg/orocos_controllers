@@ -93,7 +93,9 @@ private:
     unsigned int numberOfJoints;
 
 	Eigen::VectorXd joint_position_;
-	int licznik;
+
+	ros::Time trajectory_finish_time;
+
 
     // RTT action server
     rtt_actionlib::RTTActionServer<control_msgs::FollowJointTrajectoryAction> as;

@@ -36,195 +36,190 @@
  */
 
 #include <ocl/Component.hpp>
+#include "rtt_rosclock/rtt_rosclock.h"
 
 #include "InternalSpaceSplineTrajectoryAction.h"
 
-InternalSpaceSplineTrajectoryAction::InternalSpaceSplineTrajectoryAction(const std::string& name) :
-  RTT::TaskContext(name, PreOperational),
-      numberOfJoints_prop("number_of_joints", "", 0), command_port_("command"), licznik(0)
-{
-  // Add action server ports to this task's root service
-  as.addPorts(this->provides());
+InternalSpaceSplineTrajectoryAction::InternalSpaceSplineTrajectoryAction(
+		const std::string& name) :
+		RTT::TaskContext(name, PreOperational), numberOfJoints_prop(
+				"number_of_joints", "", 0), command_port_("command") {
+	// Add action server ports to this task's root service
+	as.addPorts(this->provides());
 
-  // Bind action server goal and cancel callbacks (see below)
-  as.registerGoalCallback(boost::bind(&InternalSpaceSplineTrajectoryAction::goalCB, this, _1));
-  as.registerCancelCallback(boost::bind(&InternalSpaceSplineTrajectoryAction::cancelCB, this, _1));
+	// Bind action server goal and cancel callbacks (see below)
+	as.registerGoalCallback(
+			boost::bind(&InternalSpaceSplineTrajectoryAction::goalCB, this,
+					_1));
+	as.registerCancelCallback(
+			boost::bind(&InternalSpaceSplineTrajectoryAction::cancelCB, this,
+					_1));
 
-  this->addPort("trajectoryPtr", trajectory_ptr_port);
-  this->addPort("JointPosition", port_joint_position_);
-  this->addEventPort(command_port_, boost::bind(&InternalSpaceSplineTrajectoryAction::commandCB, this));
-  this->addProperty("joint_names", jointNames);
+	this->addPort("trajectoryPtr", trajectory_ptr_port);
+	this->addPort("JointPosition", port_joint_position_);
+	this->addEventPort(command_port_,
+			boost::bind(&InternalSpaceSplineTrajectoryAction::commandCB, this));
+	this->addProperty("joint_names", jointNames);
 }
 
-InternalSpaceSplineTrajectoryAction::~InternalSpaceSplineTrajectoryAction()
-{
+InternalSpaceSplineTrajectoryAction::~InternalSpaceSplineTrajectoryAction() {
 
 }
 
-bool InternalSpaceSplineTrajectoryAction::configureHook()
-{
-  if (jointNames.size() <= 0)
-  {
-    return false;
-  }
-  
-  numberOfJoints = jointNames.size();
-  
-  return true;
+bool InternalSpaceSplineTrajectoryAction::configureHook() {
+	if (jointNames.size() <= 0) {
+		return false;
+	}
+
+	numberOfJoints = jointNames.size();
+
+	return true;
 }
 
-bool InternalSpaceSplineTrajectoryAction::startHook()
-{
-  as.start();
-  goal_active = false;
-  enable = true;
-  return true;
+bool InternalSpaceSplineTrajectoryAction::startHook() {
+	as.start();
+	goal_active = false;
+	enable = true;
+	return true;
 }
 
-void InternalSpaceSplineTrajectoryAction::updateHook()
-{
+void InternalSpaceSplineTrajectoryAction::updateHook() {
 
+	if (port_joint_position_.read(joint_position_) == RTT::NoData) {
 
-	// ma sie uruchamiac co 2ms - zaktualizoawc irp6.ops
+	}
 
-	  if(port_joint_position_.read(joint_position_) == RTT::NoData) {
+	if (goal_active) {
 
-	  }
+		ros::Time now = rtt_rosclock::host_rt_now();
 
-	  if (goal_active) {
+		if (now > trajectory_finish_time)
 
-		  licznik++;
+		{
+			activeGoal.setSucceeded();
+			goal_active = false;
+		}
 
-		  if (licznik==200)
-
-		  {
-			  activeGoal.setSucceeded();
-			  goal_active = false;
-		  }
-
-
-	  }
-
-
+	}
 
 	//std::cout << "aqq: " << joint_position_ << std::endl;
 
 //	RTT::Logger::log(RTT::Logger::Error) << "aqq: " << joint_position_ << RTT::endlog();
 
-	// ma sprawdzic czy juz zakonyczl wykonywanie trajektorii - patrzymy czy pozycja zmierzona w stawach jest wystarczajaco blisko pozycji zadanej
-		// dodac port ze zmierzona pozycja
+// ma sprawdzic czy juz zakonyczl wykonywanie trajektorii - patrzymy czy pozycja zmierzona w stawach jest wystarczajaco blisko pozycji zadanej
+// dodac port ze zmierzona pozycja
 
-	//jesli zakonczyl interpolacje i jest w pozycji zmieroznej to activeGoal.setsucceded
-	// http://docs.ros.org/hydro/api/actionlib/html/classactionlib_1_1ServerGoalHandle.html
+//jesli zakonczyl interpolacje i jest w pozycji zmierzonej to activeGoal.setsucceded
+// http://docs.ros.org/hydro/api/actionlib/html/classactionlib_1_1ServerGoalHandle.html
 
-	// jesli nie to nic narazie
+// jesli nie to nic narazie
 }
 
-void InternalSpaceSplineTrajectoryAction::goalCB(GoalHandle gh)
-{
-  if (!goal_active)
-  {
-    std::vector<int> remapTable;
-    remapTable.resize(numberOfJoints);
-    trajectory_msgs::JointTrajectory* trj_ptr =  new trajectory_msgs::JointTrajectory;
-    Goal g = gh.getGoal();
+void InternalSpaceSplineTrajectoryAction::goalCB(GoalHandle gh) {
+	if (!goal_active) {
+		std::vector<int> remapTable;
+		remapTable.resize(numberOfJoints);
+		trajectory_msgs::JointTrajectory* trj_ptr =
+				new trajectory_msgs::JointTrajectory;
+		Goal g = gh.getGoal();
 
-    RTT::Logger::log(RTT::Logger::Debug) << "Received trajectory contain " << g->trajectory.points.size() << " points"
-        << RTT::endlog();
+		RTT::Logger::log(RTT::Logger::Debug) << "Received trajectory contain "
+				<< g->trajectory.points.size() << " points" << RTT::endlog();
 
-    // fill remap table
-    for (unsigned int i = 0; i < numberOfJoints; i++)
-    {
-      int jointId = -1;
-      for (unsigned int j = 0; j < g->trajectory.joint_names.size(); j++)
-      {
-        if (g->trajectory.joint_names[j] == jointNames[i])
-        {
-          jointId = j;
-          break;
-        }
-      }
-      if (jointId < 0)
-      {
-        RTT::Logger::log(RTT::Logger::Error) << "Trajectory contains invalid joint" << RTT::endlog();
-        gh.setRejected();
-        return;
-      }
-      else
-      {
-        remapTable[i] = jointId;
-      }
+		// fill remap table
+		for (unsigned int i = 0; i < numberOfJoints; i++) {
+			int jointId = -1;
+			for (unsigned int j = 0; j < g->trajectory.joint_names.size();
+					j++) {
+				if (g->trajectory.joint_names[j] == jointNames[i]) {
+					jointId = j;
+					break;
+				}
+			}
+			if (jointId < 0) {
+				RTT::Logger::log(RTT::Logger::Error)
+						<< "Trajectory contains invalid joint" << RTT::endlog();
+				gh.setRejected();
+				return;
+			} else {
+				remapTable[i] = jointId;
+			}
 
-    }
+		}
 
-    //remap joints
+		//remap joints
 
-    trj_ptr->header = g->trajectory.header;
-    trj_ptr->points.resize(g->trajectory.points.size());
+		trj_ptr->header = g->trajectory.header;
+		trj_ptr->points.resize(g->trajectory.points.size());
 
-    for (unsigned int i = 0; i < g->trajectory.points.size(); i++)
-    {
-      trj_ptr->points[i].positions.resize(g->trajectory.points[i].positions.size());
-      for (unsigned int j = 0; j < g->trajectory.points[i].positions.size(); j++)
-      {
-        trj_ptr->points[i].positions[j] = g->trajectory.points[i].positions[remapTable[j]];
-      }
+		for (unsigned int i = 0; i < g->trajectory.points.size(); i++) {
+			trj_ptr->points[i].positions.resize(
+					g->trajectory.points[i].positions.size());
+			for (unsigned int j = 0;
+					j < g->trajectory.points[i].positions.size(); j++) {
+				trj_ptr->points[i].positions[j] =
+						g->trajectory.points[i].positions[remapTable[j]];
+			}
 
-      trj_ptr->points[i].velocities.resize(g->trajectory.points[i].velocities.size());
-      for (unsigned int j = 0; j < g->trajectory.points[i].velocities.size(); j++)
-      {
-        trj_ptr->points[i].velocities[j] = g->trajectory.points[i].velocities[remapTable[j]];
-      }
+			trj_ptr->points[i].velocities.resize(
+					g->trajectory.points[i].velocities.size());
+			for (unsigned int j = 0;
+					j < g->trajectory.points[i].velocities.size(); j++) {
+				trj_ptr->points[i].velocities[j] =
+						g->trajectory.points[i].velocities[remapTable[j]];
+			}
 
-      trj_ptr->points[i].accelerations.resize(g->trajectory.points[i].accelerations.size());
-      for (unsigned int j = 0; j < g->trajectory.points[i].accelerations.size(); j++)
-      {
-        trj_ptr->points[i].accelerations[j] = g->trajectory.points[i].accelerations[remapTable[j]];
-      }
+			trj_ptr->points[i].accelerations.resize(
+					g->trajectory.points[i].accelerations.size());
+			for (unsigned int j = 0;
+					j < g->trajectory.points[i].accelerations.size(); j++) {
+				trj_ptr->points[i].accelerations[j] =
+						g->trajectory.points[i].accelerations[remapTable[j]];
+			}
 
-      trj_ptr->points[i].time_from_start = g->trajectory.points[i].time_from_start;
+			trj_ptr->points[i].time_from_start =
+					g->trajectory.points[i].time_from_start;
 
-    }
+		}
 
-    activeGoal = gh;
-    goal_active = true;
-    
-    bool ok = true;
-    
-    RTT::TaskContext::PeerList peers = this->getPeerList();
-    for(size_t i = 0; i < peers.size(); i++)
-    {
-      RTT::Logger::log(RTT::Logger::Debug) << "Starting peer : " << peers[i] << RTT::endlog();
-      ok = ok && this->getPeer(peers[i])->start();
-    }
-    
-    if(ok)
-    {
-      trajectory_msgs::JointTrajectoryConstPtr trj_cptr = trajectory_msgs::JointTrajectoryConstPtr(trj_ptr);
+		trajectory_finish_time =
+				g->trajectory.header.stamp
+						+ g->trajectory.points[g->trajectory.points.size() - 1].time_from_start;
 
-      trajectory_ptr_port.write(trj_cptr);
-    
-      gh.setAccepted();
-      goal_active = true;
-    } else
-    {
-      gh.setRejected();
-      goal_active = false;
-    }
-  }
-  else
-  {
-    gh.setRejected();
-  }
+		activeGoal = gh;
+		goal_active = true;
+
+		bool ok = true;
+
+		RTT::TaskContext::PeerList peers = this->getPeerList();
+		for (size_t i = 0; i < peers.size(); i++) {
+			RTT::Logger::log(RTT::Logger::Debug) << "Starting peer : "
+					<< peers[i] << RTT::endlog();
+			ok = ok && this->getPeer(peers[i])->start();
+		}
+
+		if (ok) {
+			trajectory_msgs::JointTrajectoryConstPtr trj_cptr =
+					trajectory_msgs::JointTrajectoryConstPtr(trj_ptr);
+
+			trajectory_ptr_port.write(trj_cptr);
+
+			gh.setAccepted();
+			goal_active = true;
+		} else {
+			gh.setRejected();
+			goal_active = false;
+		}
+	} else {
+		gh.setRejected();
+	}
 }
 
-void InternalSpaceSplineTrajectoryAction::cancelCB(GoalHandle gh)
-{
-  goal_active = false;
+void InternalSpaceSplineTrajectoryAction::cancelCB(GoalHandle gh) {
+	goal_active = false;
 }
 
-void InternalSpaceSplineTrajectoryAction::commandCB()
-{
+void InternalSpaceSplineTrajectoryAction::commandCB() {
 
 }
 
