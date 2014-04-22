@@ -44,8 +44,8 @@
 InternalSpaceSplineTrajectoryGenerator::InternalSpaceSplineTrajectoryGenerator(const std::string& name) : RTT::TaskContext(name, PreOperational)
 {
   this->ports()->addPort("trajectoryPtr", port_trajectory_);
-  this->ports()->addPort("JointPositionCommand", port_joint_position_command_);
-  this->ports()->addPort("JointPosition", port_joint_position_);
+  this->ports()->addPort("JointPositionCommand", port_internal_space_position_command_);
+  this->ports()->addPort("JointPosition", port_internal_space_position_measurement_);
 
   this->addProperty("number_of_joints", number_of_joints_);
   
@@ -67,7 +67,7 @@ bool InternalSpaceSplineTrajectoryGenerator::configureHook()
     vel_profile_.resize(number_of_joints_);
 
     des_jnt_pos_.resize(number_of_joints_);
-    port_joint_position_command_.setDataSample(des_jnt_pos_);
+    port_internal_space_position_command_.setDataSample(des_jnt_pos_);
 	
     return true;
   }
@@ -84,7 +84,7 @@ bool InternalSpaceSplineTrajectoryGenerator::configureHook()
 }
 
 bool InternalSpaceSplineTrajectoryGenerator::startHook() {
-  if(port_joint_position_.read(setpoint_) == RTT::NoData) {
+  if(port_internal_space_position_measurement_.read(setpoint_) == RTT::NoData) {
     return false;
   }
   return true;
@@ -155,7 +155,7 @@ void InternalSpaceSplineTrajectoryGenerator::updateHook() {
     }
   }
   
-  port_joint_position_command_.write(setpoint_);  
+  port_internal_space_position_command_.write(setpoint_);
 }
 
 ORO_CREATE_COMPONENT( InternalSpaceSplineTrajectoryGenerator )

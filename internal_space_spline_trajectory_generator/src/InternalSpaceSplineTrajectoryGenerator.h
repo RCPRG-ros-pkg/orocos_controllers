@@ -62,8 +62,8 @@ public:
 protected:
 	RTT::InputPort<trajectory_msgs::JointTrajectoryConstPtr> port_trajectory_;
 
-	RTT::OutputPort<Eigen::VectorXd > port_joint_position_command_;
-	RTT::InputPort<Eigen::VectorXd > port_joint_position_;
+	RTT::OutputPort<Eigen::VectorXd > port_internal_space_position_command_;
+	RTT::InputPort<Eigen::VectorXd > port_internal_space_position_measurement_;
 
 private:
 
