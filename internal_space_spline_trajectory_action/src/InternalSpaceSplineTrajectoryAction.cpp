@@ -37,6 +37,7 @@
 
 #include <ocl/Component.hpp>
 #include "rtt_rosclock/rtt_rosclock.h"
+#include "eigen_conversions/eigen_msg.h"
 
 #include "InternalSpaceSplineTrajectoryAction.h"
 
@@ -57,6 +58,7 @@ InternalSpaceSplineTrajectoryAction::InternalSpaceSplineTrajectoryAction(
 
 	this->addPort("trajectoryPtr", trajectory_ptr_port);
 	this->addPort("JointPosition", port_joint_position_);
+	this->addPort("JointPositionCommand", port_joint_position_command_);
 	this->addEventPort(command_port_,
 			boost::bind(&InternalSpaceSplineTrajectoryAction::commandCB, this));
 	this->addProperty("joint_names", jointNames);
@@ -89,18 +91,112 @@ void InternalSpaceSplineTrajectoryAction::updateHook() {
 
 	}
 
+	control_msgs::FollowJointTrajectoryFeedback feedback;
+	control_msgs::FollowJointTrajectoryResult res;
+
+	port_joint_position_command_.read(desired_joint_position_);
+
+	Goal g = activeGoal.getGoal();
 	if (goal_active) {
 		//	std::cout << "blabla: " << std::endl;
 		ros::Time now = rtt_rosclock::host_rt_now();
 
 		if (now > trajectory_finish_time)
-
 		{
-			//	std::cout << "aaaaaa: " << std::endl;
-			activeGoal.setSucceeded();
+
+			//sprawdzenie pozycji, jesli ok to SUCCESSFUL jeśli nie to GOAL_TOLERANCE_VIOLATED
+
+			bool violated = false;
+			for(int i=0; i<numberOfJoints; i++)
+			{
+				//std::cout << "POSITION[" << i << "]:" << joint_position_[i] << std::endl;
+				//std::cout << "POINTS[" << i << "]:" << g->trajectory.points[g->trajectory.points.size()-1].positions[i] << std::endl;
+
+				for(int j=0; j<g->goal_tolerance.size(); j++)
+				{
+					if(g->goal_tolerance[j].name == g->trajectory.joint_names[i])
+					{
+						//std::cout << "CHECK TOLERANCE OF " << g->trajectory.joint_names[i] << std::endl;
+
+						if(joint_position_[i] + g->goal_tolerance[j].position < g->trajectory.points[g->trajectory.points.size()-1].positions[i]
+						|| joint_position_[i] - g->goal_tolerance[j].position > g->trajectory.points[g->trajectory.points.size()-1].positions[i])
+						{
+							violated = true;
+							//std::cout << "VIOLATED" << std::endl;
+						}
+
+					}
+
+				}
+
+			}
+
+			//std::cout << "-----------" << std::endl;
+
+
+
+
+			if(violated)
+			{
+				res.error_code = control_msgs::FollowJointTrajectoryResult::GOAL_TOLERANCE_VIOLATED;
+				activeGoal.setAborted(res, "");
+
+			}
+			else
+			{
+				res.error_code = control_msgs::FollowJointTrajectoryResult::SUCCESSFUL;
+				activeGoal.setSucceeded(res, "");
+			}
+
+			//-
+
 			goal_active = false;
+
+
+
 		}
 
+		Eigen::VectorXd actual, desired, error;
+		actual = joint_position_;
+		desired = desired_joint_position_;
+
+		error = actual - desired;
+
+		feedback.error.positions.reserve(error.size());
+		for(int i=0; i<error.size(); i++)
+		{
+			feedback.error.positions.push_back((double)error[i]);
+		}
+
+		//wysyłanie feedback
+
+		feedback.header.stamp = rtt_rosclock::host_rt_now();
+
+		feedback.actual.positions.reserve(joint_position_.size());
+		for(int i=0; i<joint_position_.size(); i++)
+		{
+			feedback.actual.positions.push_back((double)joint_position_[i]);
+		}
+
+		activeGoal.publishFeedback(feedback);
+
+		//sprawdzanie PATH_TOLRANCE_VIOLATED
+		for(int i=0; i<g->path_tolerance.size();i++)
+		{
+			for(int j=0; j<g->trajectory.joint_names.size(); j++)
+			{
+				if(g->trajectory.joint_names[j] == g->path_tolerance[i].name)
+				{
+					if (!checkTolerance(error[j], g->path_tolerance[i])) {
+
+						trajectory_ptr_port.write(trajectory_msgs::JointTrajectoryConstPtr());
+						res.error_code = control_msgs::FollowJointTrajectoryResult::PATH_TOLERANCE_VIOLATED;
+						activeGoal.setAborted(res);
+						break;
+					}
+				}
+			}
+		}
 	}
 
 	//std::cout << "aqq: " << joint_position_ << std::endl;
@@ -114,6 +210,15 @@ void InternalSpaceSplineTrajectoryAction::updateHook() {
 // http://docs.ros.org/hydro/api/actionlib/html/classactionlib_1_1ServerGoalHandle.html
 
 // jesli nie to nic narazie
+}
+
+bool InternalSpaceSplineTrajectoryAction::checkTolerance(float err, control_msgs::JointTolerance tol) {
+
+
+	if(fabs(err) > tol.position)
+		return false;
+	else
+		return true;
 }
 
 void InternalSpaceSplineTrajectoryAction::goalCB(GoalHandle gh) {
@@ -147,6 +252,46 @@ void InternalSpaceSplineTrajectoryAction::goalCB(GoalHandle gh) {
 			}
 
 		}
+
+		control_msgs::FollowJointTrajectoryResult res;
+
+		//Sprawdzenie ograniczeń w jointach INVALID_JOINTS
+		//przeliczyć ograniczenia na joint
+		bool invalid_joint = false;
+		for (unsigned int i = 0; i < numberOfJoints; i++) {
+			for(int j = 0; j < g->trajectory.points.size();j++)	{
+				if(g->trajectory.points[j].positions[i] > UPPER_JOINT_LIMIT[i]
+				   || g->trajectory.points[j].positions[i] < LOWER_JOINT_LIMIT[i])
+				{
+					std::cout << "INVALID JOINT[" << i << "]: "<< UPPER_JOINT_LIMIT[i] << ">" << g->trajectory.points[j].positions[i] << ">" << LOWER_JOINT_LIMIT[i] << std::endl;
+					invalid_joint = true;
+				}
+			}
+		}
+		if(invalid_joint){
+			//std::cout << "INVALID JOINT!" << std::endl;
+			res.error_code = control_msgs::FollowJointTrajectoryResult::INVALID_JOINTS;
+			gh.setRejected(res, "");
+			goal_active = false;
+			return;
+
+		}
+
+
+		//Sprawdzenie czy pozycja jest osiągalna INVALID_GOAL
+		//to do
+
+
+		//Sprawdzenie czasu w nagłówku OLD_HEADER_TIMESTAMP
+		//std::cout << "TIME NOW:" << rtt_rosclock::host_rt_now() << std::endl;
+		//std::cout << "STAMP:" << g->trajectory.header.stamp << std::endl;
+
+		if(rtt_rosclock::host_rt_now() > g->trajectory.header.stamp){
+			res.error_code = control_msgs::FollowJointTrajectoryResult::OLD_HEADER_TIMESTAMP;
+			gh.setRejected(res, "");
+
+		}
+
 
 		//remap joints
 

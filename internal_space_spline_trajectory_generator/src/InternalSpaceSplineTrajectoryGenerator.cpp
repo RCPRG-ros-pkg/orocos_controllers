@@ -143,7 +143,7 @@ void InternalSpaceSplineTrajectoryGenerator::updateHook() {
       }
       
       //std::cout << t << std::endl;
-      
+
       for (unsigned int i = 0; i < number_of_joints_; i++)
       {
         setpoint_(i) = vel_profile_[i].Pos(t);
