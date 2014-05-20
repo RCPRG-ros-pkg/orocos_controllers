@@ -105,9 +105,27 @@ void InternalSpaceSplineTrajectoryGenerator::updateHook() {
         for (unsigned int i = 0; i < number_of_joints_; i++) {
           if(trajectory_ptr_ < 1) {
               //std::cout << "dupa < 1" << std::endl;
-              vel_profile_[i].SetProfileDuration(old_point_(i), trajectory_->points[trajectory_ptr_].positions[i], trajectory_->points[trajectory_ptr_].time_from_start.toSec());
+              if (trajectory_->points[trajectory_ptr_].accelerations.size() > 0 && trajectory_->points[trajectory_ptr_].velocities.size() > 0) {
+                vel_profile_[i].SetProfileDuration(old_point_(i),
+                  0.0,
+                  0.0,
+                  trajectory_->points[trajectory_ptr_].positions[i],
+                  trajectory_->points[trajectory_ptr_].velocities[i],
+                  trajectory_->points[trajectory_ptr_].accelerations[i],
+                  trajectory_->points[trajectory_ptr_].time_from_start.toSec());
+              } else if (trajectory_->points[trajectory_ptr_].velocities.size() > 0) {
+                vel_profile_[i].SetProfileDuration(old_point_(i),
+                  0.0,
+                  trajectory_->points[trajectory_ptr_].positions[i],
+                  trajectory_->points[trajectory_ptr_].velocities[i],
+                  trajectory_->points[trajectory_ptr_].time_from_start.toSec());
+              } else {
+                vel_profile_[i].SetProfileDuration(old_point_(i),
+                  trajectory_->points[trajectory_ptr_].positions[i],
+                  trajectory_->points[trajectory_ptr_].time_from_start.toSec());
+              }
           } else {
-            if (trajectory_->points[trajectory_ptr_-1].accelerations.size() > 0 && trajectory_->points[trajectory_ptr_-1].accelerations.size() > 0) {
+            if (trajectory_->points[trajectory_ptr_-1].accelerations.size() > 0 && trajectory_->points[trajectory_ptr_].accelerations.size() > 0) {
               vel_profile_[i].SetProfileDuration(
                 trajectory_->points[trajectory_ptr_-1].positions[i],
                 trajectory_->points[trajectory_ptr_-1].velocities[i],
@@ -116,7 +134,7 @@ void InternalSpaceSplineTrajectoryGenerator::updateHook() {
                 trajectory_->points[trajectory_ptr_].velocities[i],
                 trajectory_->points[trajectory_ptr_].accelerations[i],
                 (trajectory_->points[trajectory_ptr_].time_from_start - trajectory_->points[trajectory_ptr_-1].time_from_start).toSec());
-            } else if (trajectory_->points[trajectory_ptr_-1].velocities.size() > 0 && trajectory_->points[trajectory_ptr_-1].velocities.size() > 0) {
+            } else if (trajectory_->points[trajectory_ptr_-1].velocities.size() > 0 && trajectory_->points[trajectory_ptr_].velocities.size() > 0) {
               vel_profile_[i].SetProfileDuration(
                 trajectory_->points[trajectory_ptr_-1].positions[i],
                 trajectory_->points[trajectory_ptr_-1].velocities[i],
