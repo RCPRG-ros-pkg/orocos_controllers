@@ -91,7 +91,7 @@ void InternalSpaceSplineTrajectoryAction::updateHook() {
 
 	if (goal_active) {
 		//	std::cout << "blabla: " << std::endl;
-		ros::Time now = rtt_rosclock::host_rt_now();
+		ros::Time now = rtt_rosclock::host_now();
 
 		if (now > trajectory_finish_time)
 

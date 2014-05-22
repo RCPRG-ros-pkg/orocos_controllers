@@ -80,7 +80,7 @@ void JointStatePublisher::updateHook() {
 		if ((joint_position_.size() == number_of_joints_)
 				&& (joint_velocity_.size() == number_of_joints_)
 				&& (joint_effort_.size() == number_of_joints_)) {
-			joint_state_.header.stamp = rtt_rosclock::host_rt_now();
+			joint_state_.header.stamp = rtt_rosclock::host_now();
 			for (unsigned int i = 0; i < number_of_joints_; i++) {
 				joint_state_.position[i] = joint_position_[i];
 				joint_state_.velocity[i] = joint_velocity_[i];

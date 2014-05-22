@@ -96,7 +96,7 @@ void InternalSpaceSplineTrajectoryGenerator::updateHook() {
     old_point_ = setpoint_;
   }
   
-  ros::Time now = rtt_rosclock::host_rt_now();
+  ros::Time now = rtt_rosclock::host_now();
   if (trajectory_ && (trajectory_->header.stamp < now)) {
     for (; trajectory_ptr_ < trajectory_->points.size(); trajectory_ptr_++) {
       ros::Time trj_time = trajectory_->header.stamp
