@@ -59,13 +59,6 @@
 #include <trajectory_msgs/JointTrajectoryPoint.h>
 #include <trajectory_msgs/JointTrajectory.h>
 
-//jako parametr komponentu
-const double LOWER_MOTOR_LIMIT[6] = { -470, -110, -80, -70, -80, -1000};
-const double UPPER_MOTOR_LIMIT[6] = { 450, 100, 100, 380, 490, 3000};
-
-const double LOWER_JOINT_LIMIT[6] = { -0.45, -130.0 * M_PI / 180.0, -35.0 * M_PI / 180.0, -90.0 * M_PI / 180.0, -10.0, -2.88};
-const double UPPER_JOINT_LIMIT[6] = { 170.0 * M_PI / 180.0, -50.0 * M_PI / 180.0, 40.0 * M_PI / 180.0, 92 * M_PI / 180.0, 10.0, 2.93};
-
 class InternalSpaceSplineTrajectoryAction : public RTT::TaskContext
 {
 private:
