@@ -59,6 +59,7 @@
 #include <trajectory_msgs/JointTrajectoryPoint.h>
 #include <trajectory_msgs/JointTrajectory.h>
 
+//jako parametr komponentu
 const double LOWER_MOTOR_LIMIT[6] = { -470, -110, -80, -70, -80, -1000};
 const double UPPER_MOTOR_LIMIT[6] = { 450, 100, 100, 380, 490, 3000};
 
@@ -92,7 +93,7 @@ private:
     void goalCB(GoalHandle gh);
     void cancelCB(GoalHandle gh);
 
-    bool checkTolerance(float err, control_msgs::JointTolerance tol);
+    bool checkTolerance(double err, control_msgs::JointTolerance tol);
 
     void commandCB();
     void compleatCB();
@@ -100,6 +101,11 @@ private:
 
     std::vector<std::string> jointNames;
     unsigned int numberOfJoints;
+
+    std::vector<double> lowerLimits;
+    std::vector<double> upperLimits;
+
+    std::vector<int> remapTable;
 
 	Eigen::VectorXd joint_position_;
 	Eigen::VectorXd desired_joint_position_;
@@ -112,6 +118,8 @@ private:
     bool goal_active;
     GoalHandle activeGoal;
     bool enable;
+
+    control_msgs::FollowJointTrajectoryFeedback feedback;
 };
 
 #endif /* INTERNALSPACETRAJECTORYACTION_H_ */
