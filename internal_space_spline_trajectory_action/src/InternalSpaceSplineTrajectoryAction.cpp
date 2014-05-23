@@ -250,8 +250,8 @@ void InternalSpaceSplineTrajectoryAction::goalCB(GoalHandle gh) {
 						> upperLimits[remapTable[i]]
 						|| g->trajectory.points[j].positions[i]
 								< lowerLimits[remapTable[i]]) {
-					RTT::Logger::log(RTT::Logger::Debug) << "INVALID GOAL[" << i
-							<< "]: " << upperLimits[remapTable[i]] << ">"
+					RTT::Logger::log(RTT::Logger::Debug) << "Invalid goal ["
+							<< i << "]: " << upperLimits[remapTable[i]] << ">"
 							<< g->trajectory.points[j].positions[i] << ">"
 							<< lowerLimits[remapTable[i]] << RTT::endlog();
 					invalid_goal = true;
@@ -259,8 +259,8 @@ void InternalSpaceSplineTrajectoryAction::goalCB(GoalHandle gh) {
 			}
 		}
 		if (invalid_goal) {
-			RTT::Logger::log(RTT::Logger::Debug) << "INVALID GOAL!"
-					<< RTT::endlog();
+			RTT::Logger::log(RTT::Logger::Debug)
+					<< "Trajectory contains invalid goal!" << RTT::endlog();
 			res.error_code =
 					control_msgs::FollowJointTrajectoryResult::INVALID_GOAL;
 			gh.setRejected(res, "");
@@ -271,7 +271,7 @@ void InternalSpaceSplineTrajectoryAction::goalCB(GoalHandle gh) {
 
 		//Sprawdzenie czasu w nagłówku OLD_HEADER_TIMESTAMP
 		if (rtt_rosclock::host_rt_now() > g->trajectory.header.stamp) {
-			RTT::Logger::log(RTT::Logger::Debug) << "OLD HEADER TIMESTAMP!"
+			RTT::Logger::log(RTT::Logger::Debug) << "Old header timestamp"
 					<< RTT::endlog();
 			res.error_code =
 					control_msgs::FollowJointTrajectoryResult::OLD_HEADER_TIMESTAMP;
