@@ -42,316 +42,287 @@
 #include "InternalSpaceSplineTrajectoryAction.h"
 
 InternalSpaceSplineTrajectoryAction::InternalSpaceSplineTrajectoryAction(
-		const std::string& name) :
-		RTT::TaskContext(name, PreOperational), numberOfJoints_prop(
-				"number_of_joints", "", 0), command_port_("command") {
-	// Add action server ports to this task's root service
-	as.addPorts(this->provides());
+    const std::string& name)
+    : RTT::TaskContext(name, PreOperational),
+      numberOfJoints_prop_("number_of_joints", "", 0),
+      command_port_("command") {
+  // Add action server ports to this task's root service
+  as_.addPorts(this->provides());
 
-	// Bind action server goal and cancel callbacks (see below)
-	as.registerGoalCallback(
-			boost::bind(&InternalSpaceSplineTrajectoryAction::goalCB, this,
-					_1));
-	as.registerCancelCallback(
-			boost::bind(&InternalSpaceSplineTrajectoryAction::cancelCB, this,
-					_1));
+  // Bind action server goal and cancel callbacks (see below)
+  as_.registerGoalCallback(
+      boost::bind(&InternalSpaceSplineTrajectoryAction::goalCB, this, _1));
+  as_.registerCancelCallback(
+      boost::bind(&InternalSpaceSplineTrajectoryAction::cancelCB, this, _1));
 
-	this->addPort("trajectoryPtr", trajectory_ptr_port);
-	this->addPort("JointPosition", port_joint_position_);
-	this->addPort("JointPositionCommand", port_joint_position_command_);
-	this->addEventPort(command_port_,
-			boost::bind(&InternalSpaceSplineTrajectoryAction::commandCB, this));
-	this->addProperty("joint_names", jointNames);
-	this->addProperty("lower_limits", lowerLimits);
-	this->addProperty("upper_limits", upperLimits);
+  this->addPort("trajectoryPtr", trajectory_ptr_port_);
+  this->addPort("JointPosition", port_joint_position_);
+  this->addPort("JointPositionCommand", port_joint_position_command_);
+  this->addEventPort(
+      command_port_,
+      boost::bind(&InternalSpaceSplineTrajectoryAction::commandCB, this));
+  this->addProperty("joint_names", jointNames_);
+  this->addProperty("lower_limits", lowerLimits_);
+  this->addProperty("upper_limits", upperLimits_);
 }
 
 InternalSpaceSplineTrajectoryAction::~InternalSpaceSplineTrajectoryAction() {
-
 }
 
 bool InternalSpaceSplineTrajectoryAction::configureHook() {
-	if (jointNames.size() <= 0) {
-		return false;
-	}
+  if (jointNames_.size() <= 0) {
+    return false;
+  }
 
-	numberOfJoints = jointNames.size();
+  numberOfJoints_ = jointNames_.size();
 
-	feedback.actual.positions.reserve(numberOfJoints);
-	feedback.desired.positions.reserve(numberOfJoints);
-	feedback.error.positions.reserve(numberOfJoints);
+  feedback_.actual.positions.reserve(numberOfJoints_);
+  feedback_.desired.positions.reserve(numberOfJoints_);
+  feedback_.error.positions.reserve(numberOfJoints_);
 
-	feedback.joint_names.reserve(numberOfJoints);
-	for (int i = 0; i < jointNames.size(); i++) {
-		feedback.joint_names.push_back(jointNames[i]);
-	}
+  feedback_.joint_names.reserve(numberOfJoints_);
+  for (int i = 0; i < jointNames_.size(); i++) {
+    feedback_.joint_names.push_back(jointNames_[i]);
+  }
 
-	remapTable.resize(numberOfJoints);
+  remapTable_.resize(numberOfJoints_);
 
-	if (lowerLimits.size() != numberOfJoints
-			|| upperLimits.size() != numberOfJoints) {
-		std::cout << "Limits not loaded" << std::endl;
-		return false;
-	}
+  if (lowerLimits_.size() != numberOfJoints_
+      || upperLimits_.size() != numberOfJoints_) {
+    RTT::Logger::log(RTT::Logger::Error) << "Limits not loaded"
+                                         << RTT::endlog();
+    return false;
+  }
 
-	return true;
+  return true;
 }
 
 bool InternalSpaceSplineTrajectoryAction::startHook() {
-	as.start();
-	goal_active = false;
-	enable = true;
+  as_.start();
+  goal_active_ = false;
+  enable_ = true;
 
-	return true;
+  return true;
 }
 
 void InternalSpaceSplineTrajectoryAction::updateHook() {
+  if (port_joint_position_.read(joint_position_) == RTT::NoData) {
+  }
 
-	if (port_joint_position_.read(joint_position_) == RTT::NoData) {
+  control_msgs::FollowJointTrajectoryResult res;
 
-	}
+  port_joint_position_command_.read(desired_joint_position_);
 
-	control_msgs::FollowJointTrajectoryResult res;
+  Goal g = activeGoal_.getGoal();
+  bool violated = false;
 
-	port_joint_position_command_.read(desired_joint_position_);
+  if (goal_active_) {
+    ros::Time now = rtt_rosclock::host_rt_now();
 
-	Goal g = activeGoal.getGoal();
-	if (goal_active) {
-		ros::Time now = rtt_rosclock::host_rt_now();
+    if (now > trajectory_finish_time_) {
+      violated = false;
+      for (int i = 0; i < numberOfJoints_; i++) {
+        for (int j = 0; j < g->goal_tolerance.size(); j++) {
+          if (g->goal_tolerance[j].name == g->trajectory.joint_names[i]) {
+            // Jeśli istnieje ograniczenie to sprawdzam pozycję
+            if (joint_position_[remapTable_[i]] + g->goal_tolerance[j].position
+                < g->trajectory.points[g->trajectory.points.size() - 1]
+                    .positions[i]
+                || joint_position_[remapTable_[i]]
+                    - g->goal_tolerance[j].position
+                    > g->trajectory.points[g->trajectory.points.size() - 1]
+                        .positions[i]) {
+              violated = true;
+              RTT::Logger::log(RTT::Logger::Debug) << g->goal_tolerance[j].name
+                  << " violated with position "
+                  << joint_position_[remapTable_[i]] << RTT::endlog();
+            }
+          }
+        }
+      }
 
-		if (now > trajectory_finish_time) {
+      if (violated && now > trajectory_finish_time_ + g->goal_time_tolerance) {
+        res.error_code =
+            control_msgs::FollowJointTrajectoryResult::GOAL_TOLERANCE_VIOLATED;
+        activeGoal_.setAborted(res, "");
+        goal_active_ = false;
+      } else if (!violated) {
+        res.error_code = control_msgs::FollowJointTrajectoryResult::SUCCESSFUL;
+        activeGoal_.setSucceeded(res, "");
+        goal_active_ = false;
+      }
+    }
 
-			//sprawdzenie pozycji, jesli ok to wysyłamy SUCCESSFUL jeśli nie to po goal_time_tolerance wysyłamy GOAL_TOLERANCE_VIOLATED
-			bool violated = false;
-			for (int i = 0; i < numberOfJoints; i++) {
-				for (int j = 0; j < g->goal_tolerance.size(); j++) {
-					if (g->goal_tolerance[j].name
-							== g->trajectory.joint_names[i]) {
-						//jeśli istnieje ograniczenie to sprawdzam pozycję
-						if (joint_position_[remapTable[i]]
-								+ g->goal_tolerance[j].position
-								< g->trajectory.points[g->trajectory.points.size()
-										- 1].positions[i]
-								|| joint_position_[remapTable[i]]
-										- g->goal_tolerance[j].position
-										> g->trajectory.points[g->trajectory.points.size()
-												- 1].positions[i]) {
-							violated = true;
-							RTT::Logger::log(RTT::Logger::Debug)
-									<< g->goal_tolerance[j].name
-									<< " violated with position "
-									<< joint_position_[remapTable[i]]
-									<< RTT::endlog();
-						}
+    // Wysyłanie feedback
+    Eigen::VectorXd error = joint_position_ - desired_joint_position_;
+    for (int i = 0; i < numberOfJoints_; i++) {
+      feedback_.actual.positions.push_back(joint_position_[i]);
+      feedback_.desired.positions.push_back(desired_joint_position_[i]);
+      feedback_.error.positions.push_back(error[i]);
+    }
 
-					}
+    feedback_.header.stamp = rtt_rosclock::host_rt_now();
+    activeGoal_.publishFeedback(feedback_);
 
-				}
-
-			}
-
-			if (violated
-					&& now.toNSec()
-							> trajectory_finish_time.toNSec()
-									+ g->goal_time_tolerance.toNSec()) {
-				res.error_code =
-						control_msgs::FollowJointTrajectoryResult::GOAL_TOLERANCE_VIOLATED;
-				activeGoal.setAborted(res, "");
-				goal_active = false;
-			} else if (!violated) {
-				res.error_code =
-						control_msgs::FollowJointTrajectoryResult::SUCCESSFUL;
-				activeGoal.setSucceeded(res, "");
-				goal_active = false;
-			}
-
-		}
-
-		//wysyłanie feedback
-		Eigen::VectorXd error = joint_position_ - desired_joint_position_;
-		for (int i = 0; i < numberOfJoints; i++) {
-			feedback.actual.positions.push_back((double) joint_position_[i]);
-			feedback.desired.positions.push_back(
-					(double) desired_joint_position_[i]);
-			feedback.error.positions.push_back((double) error[i]);
-		}
-
-		feedback.header.stamp = rtt_rosclock::host_rt_now();
-		activeGoal.publishFeedback(feedback);
-
-		//sprawdzanie PATH_TOLRANCE_VIOLATED
-		for (int i = 0; i < g->path_tolerance.size(); i++) {
-			for (int j = 0; j < jointNames.size(); j++) {
-				if (jointNames[j] == g->path_tolerance[i].name) {
-					if (!checkTolerance(error[j], g->path_tolerance[i])) {
-
-						trajectory_ptr_port.write(
-								trajectory_msgs::JointTrajectoryConstPtr());
-						res.error_code =
-								control_msgs::FollowJointTrajectoryResult::PATH_TOLERANCE_VIOLATED;
-						activeGoal.setAborted(res);
-						break;
-					}
-				}
-			}
-		}
-	}
-}
-
-bool InternalSpaceSplineTrajectoryAction::checkTolerance(double err,
-		control_msgs::JointTolerance tol) {
-
-	if (fabs(err) > tol.position)
-		return false;
-	else
-		return true;
+    // Sprawdzanie PATH_TOLRANCE_VIOLATED
+    violated = false;
+    for (int i = 0; i < g->path_tolerance.size(); i++) {
+      for (int j = 0; j < jointNames_.size(); j++) {
+        if (jointNames_[j] == g->path_tolerance[i].name) {
+          if (fabs(error[j]) > g->path_tolerance[i].position) {
+            violated = true;
+            RTT::Logger::log(RTT::Logger::Error) << "Path tolerance violated"
+                                                 << RTT::endlog();
+          }
+        }
+      }
+    }
+    if (violated) {
+      trajectory_ptr_port_.write(trajectory_msgs::JointTrajectoryConstPtr());
+      res.error_code =
+          control_msgs::FollowJointTrajectoryResult::PATH_TOLERANCE_VIOLATED;
+      activeGoal_.setAborted(res);
+    }
+  }
 }
 
 void InternalSpaceSplineTrajectoryAction::goalCB(GoalHandle gh) {
-	if (!goal_active) {
+  if (!goal_active_) {
+    trajectory_msgs::JointTrajectory* trj_ptr =
+        new trajectory_msgs::JointTrajectory;
+    Goal g = gh.getGoal();
 
-		trajectory_msgs::JointTrajectory* trj_ptr =
-				new trajectory_msgs::JointTrajectory;
-		Goal g = gh.getGoal();
+    control_msgs::FollowJointTrajectoryResult res;
 
-		control_msgs::FollowJointTrajectoryResult res;
+    RTT::Logger::log(RTT::Logger::Debug) << "Received trajectory contain "
+                                         << g->trajectory.points.size()
+                                         << " points" << RTT::endlog();
 
-		RTT::Logger::log(RTT::Logger::Debug) << "Received trajectory contain "
-				<< g->trajectory.points.size() << " points" << RTT::endlog();
+    // fill remap table
+    for (unsigned int i = 0; i < numberOfJoints_; i++) {
+      int jointId = -1;
+      for (unsigned int j = 0; j < g->trajectory.joint_names.size(); j++) {
+        if (g->trajectory.joint_names[j] == jointNames_[i]) {
+          jointId = j;
+          break;
+        }
+      }
+      if (jointId < 0) {
+        RTT::Logger::log(RTT::Logger::Error)
+            << "Trajectory contains invalid joint" << RTT::endlog();
+        res.error_code =
+            control_msgs::FollowJointTrajectoryResult::INVALID_JOINTS;
+        gh.setRejected(res, "");
+        return;
+      } else {
+        remapTable_[i] = jointId;
+      }
+    }
 
-		// fill remap table
-		for (unsigned int i = 0; i < numberOfJoints; i++) {
-			int jointId = -1;
-			for (unsigned int j = 0; j < g->trajectory.joint_names.size();
-					j++) {
-				if (g->trajectory.joint_names[j] == jointNames[i]) {
-					jointId = j;
-					break;
-				}
-			}
-			if (jointId < 0) {
-				RTT::Logger::log(RTT::Logger::Error)
-						<< "Trajectory contains invalid joint" << RTT::endlog();
-				res.error_code =
-						control_msgs::FollowJointTrajectoryResult::INVALID_JOINTS;
-				gh.setRejected(res, "");
-				return;
-			} else {
-				remapTable[i] = jointId;
-			}
+    // Sprawdzenie ograniczeń w jointach INVALID_GOAL
+    bool invalid_goal = false;
+    for (unsigned int i = 0; i < numberOfJoints_; i++) {
+      for (int j = 0; j < g->trajectory.points.size(); j++) {
+        if (g->trajectory.points[j].positions[i] > upperLimits_[remapTable_[i]]
+            || g->trajectory.points[j].positions[i]
+                < lowerLimits_[remapTable_[i]]) {
+          RTT::Logger::log(RTT::Logger::Debug)
+              << "Invalid goal [" << i << "]: " << upperLimits_[remapTable_[i]]
+              << ">" << g->trajectory.points[j].positions[i] << ">"
+              << lowerLimits_[remapTable_[i]] << RTT::endlog();
+          invalid_goal = true;
+        }
+      }
+    }
 
-		}
+    if (invalid_goal) {
+      RTT::Logger::log(RTT::Logger::Debug)
+          << "Trajectory contains invalid goal!" << RTT::endlog();
+      res.error_code = control_msgs::FollowJointTrajectoryResult::INVALID_GOAL;
+      gh.setRejected(res, "");
+      goal_active_ = false;
+      return;
+    }
 
-		//Sprawdzenie ograniczeń w jointach INVALID_GOAL
-		bool invalid_goal = false;
-		for (unsigned int i = 0; i < numberOfJoints; i++) {
-			for (int j = 0; j < g->trajectory.points.size(); j++) {
-				if (g->trajectory.points[j].positions[i]
-						> upperLimits[remapTable[i]]
-						|| g->trajectory.points[j].positions[i]
-								< lowerLimits[remapTable[i]]) {
-					RTT::Logger::log(RTT::Logger::Debug) << "Invalid goal ["
-							<< i << "]: " << upperLimits[remapTable[i]] << ">"
-							<< g->trajectory.points[j].positions[i] << ">"
-							<< lowerLimits[remapTable[i]] << RTT::endlog();
-					invalid_goal = true;
-				}
-			}
-		}
-		if (invalid_goal) {
-			RTT::Logger::log(RTT::Logger::Debug)
-					<< "Trajectory contains invalid goal!" << RTT::endlog();
-			res.error_code =
-					control_msgs::FollowJointTrajectoryResult::INVALID_GOAL;
-			gh.setRejected(res, "");
-			goal_active = false;
-			return;
+    // Remap joints
+    trj_ptr->header = g->trajectory.header;
+    trj_ptr->points.resize(g->trajectory.points.size());
 
-		}
+    for (unsigned int i = 0; i < g->trajectory.points.size(); i++) {
+      trj_ptr->points[i].positions.resize(
+          g->trajectory.points[i].positions.size());
+      for (unsigned int j = 0; j < g->trajectory.points[i].positions.size();
+          j++) {
+        trj_ptr->points[i].positions[j] =
+            g->trajectory.points[i].positions[remapTable_[j]];
+      }
 
-		//Sprawdzenie czasu w nagłówku OLD_HEADER_TIMESTAMP
-		if (rtt_rosclock::host_rt_now() > g->trajectory.header.stamp) {
-			RTT::Logger::log(RTT::Logger::Debug) << "Old header timestamp"
-					<< RTT::endlog();
-			res.error_code =
-					control_msgs::FollowJointTrajectoryResult::OLD_HEADER_TIMESTAMP;
-			gh.setRejected(res, "");
+      trj_ptr->points[i].velocities.resize(
+          g->trajectory.points[i].velocities.size());
+      for (unsigned int j = 0; j < g->trajectory.points[i].velocities.size();
+          j++) {
+        trj_ptr->points[i].velocities[j] =
+            g->trajectory.points[i].velocities[remapTable_[j]];
+      }
 
-		}
+      trj_ptr->points[i].accelerations.resize(
+          g->trajectory.points[i].accelerations.size());
+      for (unsigned int j = 0; j < g->trajectory.points[i].accelerations.size();
+          j++) {
+        trj_ptr->points[i].accelerations[j] = g->trajectory.points[i]
+            .accelerations[remapTable_[j]];
+      }
 
-		//remap joints
-		trj_ptr->header = g->trajectory.header;
-		trj_ptr->points.resize(g->trajectory.points.size());
+      trj_ptr->points[i].time_from_start = g->trajectory.points[i]
+          .time_from_start;
+    }
 
-		for (unsigned int i = 0; i < g->trajectory.points.size(); i++) {
-			trj_ptr->points[i].positions.resize(
-					g->trajectory.points[i].positions.size());
-			for (unsigned int j = 0;
-					j < g->trajectory.points[i].positions.size(); j++) {
-				trj_ptr->points[i].positions[j] =
-						g->trajectory.points[i].positions[remapTable[j]];
-			}
+    // Sprawdzenie czasu w nagłówku OLD_HEADER_TIMESTAMP
+    if (rtt_rosclock::host_rt_now() > g->trajectory.header.stamp) {
+      RTT::Logger::log(RTT::Logger::Debug) << "Old header timestamp"
+                                           << RTT::endlog();
+      res.error_code =
+          control_msgs::FollowJointTrajectoryResult::OLD_HEADER_TIMESTAMP;
+      gh.setRejected(res, "");
+    }
 
-			trj_ptr->points[i].velocities.resize(
-					g->trajectory.points[i].velocities.size());
-			for (unsigned int j = 0;
-					j < g->trajectory.points[i].velocities.size(); j++) {
-				trj_ptr->points[i].velocities[j] =
-						g->trajectory.points[i].velocities[remapTable[j]];
-			}
+    trajectory_finish_time_ = g->trajectory.header.stamp
+        + g->trajectory.points[g->trajectory.points.size() - 1].time_from_start;
 
-			trj_ptr->points[i].accelerations.resize(
-					g->trajectory.points[i].accelerations.size());
-			for (unsigned int j = 0;
-					j < g->trajectory.points[i].accelerations.size(); j++) {
-				trj_ptr->points[i].accelerations[j] =
-						g->trajectory.points[i].accelerations[remapTable[j]];
-			}
+    activeGoal_ = gh;
+    goal_active_ = true;
 
-			trj_ptr->points[i].time_from_start =
-					g->trajectory.points[i].time_from_start;
+    bool ok = true;
 
-		}
+    RTT::TaskContext::PeerList peers = this->getPeerList();
+    for (size_t i = 0; i < peers.size(); i++) {
+      RTT::Logger::log(RTT::Logger::Debug) << "Starting peer : " << peers[i]
+                                           << RTT::endlog();
+      ok = ok && this->getPeer(peers[i])->start();
+    }
 
-		trajectory_finish_time =
-				g->trajectory.header.stamp
-						+ g->trajectory.points[g->trajectory.points.size() - 1].time_from_start;
+    if (ok) {
+      trajectory_msgs::JointTrajectoryConstPtr trj_cptr =
+          trajectory_msgs::JointTrajectoryConstPtr(trj_ptr);
 
-		activeGoal = gh;
-		goal_active = true;
+      trajectory_ptr_port_.write(trj_cptr);
 
-		bool ok = true;
-
-		RTT::TaskContext::PeerList peers = this->getPeerList();
-		for (size_t i = 0; i < peers.size(); i++) {
-			RTT::Logger::log(RTT::Logger::Debug) << "Starting peer : "
-					<< peers[i] << RTT::endlog();
-			ok = ok && this->getPeer(peers[i])->start();
-		}
-
-		if (ok) {
-			trajectory_msgs::JointTrajectoryConstPtr trj_cptr =
-					trajectory_msgs::JointTrajectoryConstPtr(trj_ptr);
-
-			trajectory_ptr_port.write(trj_cptr);
-
-			gh.setAccepted();
-			goal_active = true;
-		} else {
-			gh.setRejected();
-			goal_active = false;
-		}
-	} else {
-		gh.setRejected();
-	}
+      gh.setAccepted();
+      goal_active_ = true;
+    } else {
+      gh.setRejected();
+      goal_active_ = false;
+    }
+  } else {
+    gh.setRejected();
+  }
 }
 
 void InternalSpaceSplineTrajectoryAction::cancelCB(GoalHandle gh) {
-	goal_active = false;
+  goal_active_ = false;
 }
 
 void InternalSpaceSplineTrajectoryAction::commandCB() {
-
 }
 
 ORO_CREATE_COMPONENT(InternalSpaceSplineTrajectoryAction)

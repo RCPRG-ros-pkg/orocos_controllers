@@ -44,8 +44,6 @@
 #include <vector>
 #include <Eigen/Dense>
 
-//#include <boost/shared_ptr.h>
-
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
 #include <rtt/Property.hpp>
@@ -59,60 +57,57 @@
 #include <trajectory_msgs/JointTrajectoryPoint.h>
 #include <trajectory_msgs/JointTrajectory.h>
 
-class InternalSpaceSplineTrajectoryAction : public RTT::TaskContext
-{
-private:
-    typedef actionlib::ServerGoalHandle<control_msgs::FollowJointTrajectoryAction> GoalHandle;
-    typedef boost::shared_ptr<const control_msgs::FollowJointTrajectoryGoal> Goal;
-public:
-    InternalSpaceSplineTrajectoryAction(const std::string& name);
-    virtual ~InternalSpaceSplineTrajectoryAction();
+class InternalSpaceSplineTrajectoryAction : public RTT::TaskContext {
+ private:
+  typedef actionlib::ServerGoalHandle<control_msgs::FollowJointTrajectoryAction> GoalHandle;
+  typedef boost::shared_ptr<const control_msgs::FollowJointTrajectoryGoal> Goal;
 
-    bool configureHook();
-    bool startHook();
-    void updateHook();
-protected:
-    RTT::OutputPort<trajectory_msgs::JointTrajectoryConstPtr> trajectory_ptr_port;
+ public:
+  InternalSpaceSplineTrajectoryAction(const std::string& name);
+  virtual ~InternalSpaceSplineTrajectoryAction();
 
-    RTT::Property<int> numberOfJoints_prop;
+  bool configureHook();
+  bool startHook();
+  void updateHook();
 
-    RTT::InputPort<trajectory_msgs::JointTrajectory> command_port_;
+ protected:
+  RTT::OutputPort<trajectory_msgs::JointTrajectoryConstPtr> trajectory_ptr_port_;
 
-    RTT::InputPort<Eigen::VectorXd > port_joint_position_;
-    RTT::InputPort<Eigen::VectorXd > port_joint_position_command_;
+  RTT::Property<int> numberOfJoints_prop_;
 
-private:
+  RTT::InputPort<trajectory_msgs::JointTrajectory> command_port_;
 
-    void goalCB(GoalHandle gh);
-    void cancelCB(GoalHandle gh);
+  RTT::InputPort<Eigen::VectorXd> port_joint_position_;
+  RTT::InputPort<Eigen::VectorXd> port_joint_position_command_;
 
-    bool checkTolerance(double err, control_msgs::JointTolerance tol);
+ private:
+  void goalCB(GoalHandle gh);
+  void cancelCB(GoalHandle gh);
 
-    void commandCB();
-    void compleatCB();
-    void bufferReadyCB();
+  void commandCB();
+  void compleatCB();
+  void bufferReadyCB();
 
-    std::vector<std::string> jointNames;
-    unsigned int numberOfJoints;
+  std::vector<std::string> jointNames_;
+  unsigned int numberOfJoints_;
 
-    std::vector<double> lowerLimits;
-    std::vector<double> upperLimits;
+  std::vector<double> lowerLimits_;
+  std::vector<double> upperLimits_;
 
-    std::vector<int> remapTable;
+  std::vector<int> remapTable_;
 
-	Eigen::VectorXd joint_position_;
-	Eigen::VectorXd desired_joint_position_;
+  Eigen::VectorXd joint_position_;
+  Eigen::VectorXd desired_joint_position_;
 
-	ros::Time trajectory_finish_time;
+  ros::Time trajectory_finish_time_;
 
+  // RTT action server
+  rtt_actionlib::RTTActionServer<control_msgs::FollowJointTrajectoryAction> as_;
+  bool goal_active_;
+  GoalHandle activeGoal_;
+  bool enable_;
 
-    // RTT action server
-    rtt_actionlib::RTTActionServer<control_msgs::FollowJointTrajectoryAction> as;
-    bool goal_active;
-    GoalHandle activeGoal;
-    bool enable;
-
-    control_msgs::FollowJointTrajectoryFeedback feedback;
+  control_msgs::FollowJointTrajectoryFeedback feedback_;
 };
 
 #endif /* INTERNALSPACETRAJECTORYACTION_H_ */
