@@ -162,14 +162,18 @@ void InternalSpaceSplineTrajectoryGenerator::updateHook() {
       
       //std::cout << t << std::endl;
       
-      for (unsigned int i = 0; i < number_of_joints_; i++)
-      {
+      for (unsigned int i = 0; i < number_of_joints_; i++) {
         setpoint_(i) = vel_profile_[i].Pos(t);
         // setpoint_.setpoints[i].velocity = velProfile_[i].Vel(time * dt);
         // setpoint_.setpoints[i].acceleration = velProfile_[i].Acc(time * dt);
       }
       
       //std::cout << "p0 " << setpoint_(0) << std::endl;
+    } else {
+      for (unsigned int i = 0; i < number_of_joints_; i++) {
+        setpoint_(i) = trajectory_->points[trajectory_->points.size() - 1].positions[i];
+        trajectory_ = trajectory_msgs::JointTrajectoryConstPtr();
+      }
     }
   }
   
