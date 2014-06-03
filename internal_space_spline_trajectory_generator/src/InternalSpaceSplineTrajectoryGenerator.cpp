@@ -91,7 +91,9 @@ bool InternalSpaceSplineTrajectoryGenerator::startHook() {
 }
 
 void InternalSpaceSplineTrajectoryGenerator::updateHook() {
-  if (port_trajectory_.read(trajectory_) == RTT::NewData) {
+  trajectory_msgs::JointTrajectoryConstPtr trj_ptr_tmp;
+  if (port_trajectory_.read(trj_ptr_tmp) == RTT::NewData) {
+    trajectory_ = trj_ptr_tmp;
     trajectory_ptr_ = 0;
     old_point_ = setpoint_;
   }
@@ -172,8 +174,8 @@ void InternalSpaceSplineTrajectoryGenerator::updateHook() {
     } else {
       for (unsigned int i = 0; i < number_of_joints_; i++) {
         setpoint_(i) = trajectory_->points[trajectory_->points.size() - 1].positions[i];
-        trajectory_ = trajectory_msgs::JointTrajectoryConstPtr();
       }
+      trajectory_ = trajectory_msgs::JointTrajectoryConstPtr();
     }
   }
   
