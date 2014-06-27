@@ -22,7 +22,7 @@ bool PortDoubleSplit::configureHook() {
 
   for (size_t i = 0; i < number_of_ports_; i++) {
     char port_name[16];
-    snprintf(port_name, sizeof(port_name), "computedPwm_in_%zu", i);
+    snprintf(port_name, sizeof(port_name), "OutputPort_%zu", i);
     port_output_list_[i] = new typeof(*port_output_list_[i]);
     this->ports()->addPort(port_name, *port_output_list_[i]);
   }
@@ -34,13 +34,10 @@ bool PortDoubleSplit::configureHook() {
 
 void PortDoubleSplit::updateHook() {
 
-  if (RTT::NewData != input_port_.read(data_)) {
-    RTT::log(RTT::Error) << "NO data" << RTT::endlog();
-  }
-
-  for (int i = 0; i < number_of_ports_; i++) {
-
-    port_output_list_[i]->write(data_[i]);
+  if (RTT::NewData == input_port_.read(data_)) {
+    for (int i = 0; i < number_of_ports_; i++) {
+      port_output_list_[i]->write(data_[i]);
+    }
   }
 
 }
