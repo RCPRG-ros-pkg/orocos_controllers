@@ -19,8 +19,8 @@ class PortDoubleAggregate : public RTT::TaskContext {
  private:
 
   // ports
-  RTT::InputPort<Eigen::VectorXd> input_port_;
-  std::vector<RTT::OutputPort<double>*> port_output_list_;
+  RTT::OutputPort<Eigen::VectorXd> output_port_;
+  std::vector<RTT::InputPort<double>*> port_input_list_;
 
   Eigen::VectorXd data_;
 
