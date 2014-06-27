@@ -4,7 +4,10 @@
 
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
-#include <geometry_msgs/Pose.h>
+
+#include <string>
+#include <vector>
+#include <Eigen/Dense>
 
 class PortDoubleSplit : public RTT::TaskContext {
  public:
@@ -14,6 +17,16 @@ class PortDoubleSplit : public RTT::TaskContext {
   bool configureHook();
   void updateHook();
  private:
+
+  // ports
+  RTT::InputPort<Eigen::VectorXd> input_port_;
+  std::vector<RTT::OutputPort<double>*> port_output_list_;
+
+  Eigen::VectorXd data_;
+
+  // properties
+  int number_of_ports_;
+
 
 };
 
