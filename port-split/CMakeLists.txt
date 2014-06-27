@@ -12,4 +12,7 @@ include_directories(${catkin_INCLUDE_DIRS} ${Eigen_INCLUDE_DIRS})
 orocos_component(port_double_split src/PortDoubleSplit.cpp)
 target_link_libraries(port_double_split ${catkin_LIBRARIES})
 
+orocos_component(port_double_aggregate src/PortDoubleAggregate.cpp)
+target_link_libraries(port_double_aggregate ${catkin_LIBRARIES})
+
 orocos_generate_package()
