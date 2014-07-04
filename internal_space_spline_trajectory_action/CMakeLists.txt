@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 
 project(internal_space_spline_trajectory_action)
 
-find_package(catkin REQUIRED COMPONENTS rtt_ros trajectory_msgs control_msgs)
+find_package(catkin REQUIRED COMPONENTS cmake_modules rtt_ros trajectory_msgs control_msgs)
 
 find_package(OROCOS-RTT REQUIRED)
 find_package(Eigen REQUIRED)
