@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 
 project(oro_joint_state_publisher)
 
-find_package(catkin REQUIRED COMPONENTS rtt_ros sensor_msgs)
+find_package(catkin REQUIRED COMPONENTS rtt_ros sensor_msgs cmake_modules)
 
 find_package(Eigen REQUIRED)
 
