@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 
 project(fake_servo)
 
-find_package(catkin REQUIRED COMPONENTS rtt_ros)
+find_package(catkin REQUIRED COMPONENTS rtt_ros cmake_modules)
 
 catkin_package(
   DEPENDS rtt
