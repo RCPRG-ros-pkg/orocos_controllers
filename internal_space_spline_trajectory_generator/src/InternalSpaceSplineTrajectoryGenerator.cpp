@@ -86,6 +86,7 @@ bool InternalSpaceSplineTrajectoryGenerator::startHook() {
       == RTT::NoData) {
     return false;
   }
+  trajectory_.reset();
   return true;
 }
 
