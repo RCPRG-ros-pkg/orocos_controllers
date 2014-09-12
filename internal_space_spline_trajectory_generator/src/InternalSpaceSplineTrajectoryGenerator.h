@@ -68,7 +68,8 @@ protected:
 	RTT::InputPort<Eigen::VectorXd > port_internal_space_position_measurement_;
 
 private:
-
+	bool last_point_not_set_;
+	bool trajectory_active_;
 	std::vector<KDL::VelocityProfile_Spline> vel_profile_;
 
 	trajectory_msgs::JointTrajectoryPoint trajectory_old_;

@@ -44,7 +44,9 @@
 InternalSpaceSplineTrajectoryGenerator::InternalSpaceSplineTrajectoryGenerator(
     const std::string& name)
     : RTT::TaskContext(name, PreOperational),
-      trajectory_ptr_(0){
+      trajectory_ptr_(0),
+      last_point_not_set_(false),
+      trajectory_active_(false) {
   this->ports()->addPort("trajectoryPtr", port_trajectory_);
   this->ports()->addPort("JointPositionCommand",
                          port_internal_space_position_command_);
@@ -86,7 +88,8 @@ bool InternalSpaceSplineTrajectoryGenerator::startHook() {
       == RTT::NoData) {
     return false;
   }
-  trajectory_.reset();
+  last_point_not_set_ = false;
+  trajectory_active_ = false;
   return true;
 }
 
@@ -96,17 +99,21 @@ void InternalSpaceSplineTrajectoryGenerator::updateHook() {
     trajectory_ = trj_ptr_tmp;
     trajectory_ptr_ = 0;
     old_point_ = setpoint_;
+    last_point_not_set_ = true;
+    trajectory_active_ = true;
+ //   std::cout << std::endl<< "InternalSpaceSplineTrajectoryGenerator new trj" << std::endl<< std::endl<< std::endl;
   }
 
+ // std::cout << "InternalSpaceSplineTrajectoryGenerator" << std::endl;
   ros::Time now = rtt_rosclock::host_now();
-  if (trajectory_ && (trajectory_->header.stamp < now)) {
+  if (trajectory_active_ && trajectory_ && (trajectory_->header.stamp < now)) {
     for (; trajectory_ptr_ < trajectory_->points.size(); trajectory_ptr_++) {
       ros::Time trj_time = trajectory_->header.stamp
           + trajectory_->points[trajectory_ptr_].time_from_start;
       if (trj_time > now) {
         for (unsigned int i = 0; i < number_of_joints_; i++) {
           if (trajectory_ptr_ < 1) {
-            //std::cout << "dupa < 1" << std::endl;
+
             if (trajectory_->points[trajectory_ptr_].accelerations.size() > 0
                 && trajectory_->points[trajectory_ptr_].velocities.size() > 0) {
               vel_profile_[i].SetProfileDuration(
@@ -186,12 +193,13 @@ void InternalSpaceSplineTrajectoryGenerator::updateHook() {
       }
 
       //std::cout << "p0 " << setpoint_(0) << std::endl;
-    } else {
+    } else if (last_point_not_set_) {
       for (unsigned int i = 0; i < number_of_joints_; i++) {
         setpoint_(i) = trajectory_->points[trajectory_->points.size() - 1]
             .positions[i];
       }
       trajectory_ = trajectory_msgs::JointTrajectoryConstPtr();
+      last_point_not_set_ = false;
     }
   }
 
