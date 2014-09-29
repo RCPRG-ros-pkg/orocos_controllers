@@ -154,14 +154,15 @@ void InternalSpaceSplineTrajectoryAction::updateHook() {
     }
 
     // Wysyłanie feedback
-    Eigen::VectorXd error = joint_position_ - desired_joint_position_;
+
     for (int i = 0; i < numberOfJoints_; i++) {
-      feedback_.actual.positions.push_back(joint_position_[i]);
-      feedback_.desired.positions.push_back(desired_joint_position_[i]);
-      feedback_.error.positions.push_back(error[i]);
+      feedback_.actual.positions[i] = joint_position_[i];
+      feedback_.desired.positions[i] = desired_joint_position_[i];
+      feedback_.error.positions[i] = joint_position_[i] - desired_joint_position_[i];
     }
 
     feedback_.header.stamp = rtt_rosclock::host_now();
+
     activeGoal_.publishFeedback(feedback_);
 
     // Sprawdzanie PATH_TOLRANCE_VIOLATED
@@ -169,7 +170,7 @@ void InternalSpaceSplineTrajectoryAction::updateHook() {
     for (int i = 0; i < g->path_tolerance.size(); i++) {
       for (int j = 0; j < jointNames_.size(); j++) {
         if (jointNames_[j] == g->path_tolerance[i].name) {
-          if (fabs(error[j]) > g->path_tolerance[i].position) {
+          if (fabs(joint_position_[j] - desired_joint_position_[j]) > g->path_tolerance[i].position) {
             violated = true;
             RTT::Logger::log(RTT::Logger::Error) << "Path tolerance violated"
                                                  << RTT::endlog();
@@ -183,6 +184,7 @@ void InternalSpaceSplineTrajectoryAction::updateHook() {
           control_msgs::FollowJointTrajectoryResult::PATH_TOLERANCE_VIOLATED;
       activeGoal_.setAborted(res);
     }
+
   }
 }
 
@@ -278,7 +280,7 @@ void InternalSpaceSplineTrajectoryAction::goalCB(GoalHandle gh) {
     }
 
     // Sprawdzenie czasu w nagłówku OLD_HEADER_TIMESTAMP
-    if (rtt_rosclock::host_now() > g->trajectory.header.stamp) {
+    if (g->trajectory.header.stamp < rtt_rosclock::host_now()) {
       RTT::Logger::log(RTT::Logger::Debug) << "Old header timestamp"
                                            << RTT::endlog();
       res.error_code =
