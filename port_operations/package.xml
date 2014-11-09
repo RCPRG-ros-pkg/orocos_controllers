@@ -1,12 +1,12 @@
 <package>
-  <name>port_split</name>
+  <name>port_operations</name>
   <version>2.6.0</version>
-  <description>port split and aggregation</description>
+  <description>port operations</description>
   <maintainer email="tomrobotics@gmail.com">Tomasz Winiarski</maintainer>
 
   <license>BSD</license>
 
-  <url type="website">http://ros.org/wiki/irp6_kienamtics</url>
+  <url type="website"></url>
 
   <author email="tomrobotics@gmail.com">Tomasz Winiarski</author>
   
