@@ -21,7 +21,7 @@ bool PortDoubleSum::configureHook() {
   port_input_list_.resize(number_of_ports_);
 
   for (size_t i = 0; i < number_of_ports_; i++) {
-    char port_name[16];
+    char port_name[32];
     snprintf(port_name, sizeof(port_name), "InputPort_%zu", i);
     port_input_list_[i] = new typeof(*port_input_list_[i]);
     this->ports()->addPort(port_name, *port_input_list_[i]);
