@@ -28,7 +28,7 @@ bool PortDoubleAggregate::configureHook() {
   }
 
   data_.resize(number_of_ports_);
-
+  output_port_.setDataSample(data_);
   return true;
 }
 
