@@ -328,4 +328,5 @@ void InternalSpaceSplineTrajectoryAction::cancelCB(GoalHandle gh) {
 void InternalSpaceSplineTrajectoryAction::commandCB() {
 }
 
-ORO_CREATE_COMPONENT(InternalSpaceSplineTrajectoryAction))
+ORO_CREATE_COMPONENT(InternalSpaceSplineTrajectoryAction)
+

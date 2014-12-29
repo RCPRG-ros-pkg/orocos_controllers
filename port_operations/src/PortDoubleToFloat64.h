@@ -44,7 +44,6 @@ class PortDoubleToFloat64 : public RTT::TaskContext {
   explicit PortDoubleToFloat64(const std::string& name);
   virtual ~PortDoubleToFloat64();
 
-  bool configureHook();
   void updateHook();
 
  private:
