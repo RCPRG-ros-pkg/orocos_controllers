@@ -34,19 +34,21 @@
  *  Created on: 22-09-2010
  *      Author: Konrad Banachowicz
  */
-
-#include <rtt/Component.hpp>
-
-#include <exception>
-#include "rtt_rosclock/rtt_rosclock.h"
 #include "InternalSpaceSplineTrajectoryGenerator.h"
 
+#include <string>
+#include <exception>
+
+#include <rtt/Component.hpp>
+#include "rtt_rosclock/rtt_rosclock.h"
+
+
 InternalSpaceSplineTrajectoryGenerator::InternalSpaceSplineTrajectoryGenerator(
-    const std::string& name)
-    : RTT::TaskContext(name, PreOperational),
-      trajectory_ptr_(0),
-      last_point_not_set_(false),
-      trajectory_active_(false) {
+  const std::string& name)
+  : RTT::TaskContext(name, PreOperational),
+    trajectory_ptr_(0),
+    last_point_not_set_(false),
+    trajectory_active_(false) {
   this->ports()->addPort("trajectoryPtr", port_trajectory_);
   this->ports()->addPort("JointPositionCommand",
                          port_internal_space_position_command_);
@@ -101,73 +103,72 @@ void InternalSpaceSplineTrajectoryGenerator::updateHook() {
     old_point_ = setpoint_;
     last_point_not_set_ = true;
     trajectory_active_ = true;
- //   std::cout << std::endl<< "InternalSpaceSplineTrajectoryGenerator new trj" << std::endl<< std::endl<< std::endl;
+//   std::cout << std::endl<< "InternalSpaceSplineTrajectoryGenerator new trj" << std::endl<< std::endl<< std::endl;
   }
 
- // std::cout << "InternalSpaceSplineTrajectoryGenerator" << std::endl;
+// std::cout << "InternalSpaceSplineTrajectoryGenerator" << std::endl;
   ros::Time now = rtt_rosclock::host_now();
   if (trajectory_active_ && trajectory_ && (trajectory_->header.stamp < now)) {
     for (; trajectory_ptr_ < trajectory_->points.size(); trajectory_ptr_++) {
       ros::Time trj_time = trajectory_->header.stamp
-          + trajectory_->points[trajectory_ptr_].time_from_start;
+                           + trajectory_->points[trajectory_ptr_].time_from_start;
       if (trj_time > now) {
         for (unsigned int i = 0; i < number_of_joints_; i++) {
           if (trajectory_ptr_ < 1) {
-
             if (trajectory_->points[trajectory_ptr_].accelerations.size() > 0
                 && trajectory_->points[trajectory_ptr_].velocities.size() > 0) {
               vel_profile_[i].SetProfileDuration(
-                  old_point_(i), 0.0, 0.0,
-                  trajectory_->points[trajectory_ptr_].positions[i],
-                  trajectory_->points[trajectory_ptr_].velocities[i],
-                  trajectory_->points[trajectory_ptr_].accelerations[i],
-                  trajectory_->points[trajectory_ptr_].time_from_start.toSec());
+                old_point_(i), 0.0, 0.0,
+                trajectory_->points[trajectory_ptr_].positions[i],
+                trajectory_->points[trajectory_ptr_].velocities[i],
+                trajectory_->points[trajectory_ptr_].accelerations[i],
+                trajectory_->points[trajectory_ptr_].time_from_start.toSec());
             } else if (trajectory_->points[trajectory_ptr_].velocities.size()
-                > 0) {
+                       > 0) {
               vel_profile_[i].SetProfileDuration(
-                  old_point_(i), 0.0,
-                  trajectory_->points[trajectory_ptr_].positions[i],
-                  trajectory_->points[trajectory_ptr_].velocities[i],
-                  trajectory_->points[trajectory_ptr_].time_from_start.toSec());
+                old_point_(i), 0.0,
+                trajectory_->points[trajectory_ptr_].positions[i],
+                trajectory_->points[trajectory_ptr_].velocities[i],
+                trajectory_->points[trajectory_ptr_].time_from_start.toSec());
             } else {
               vel_profile_[i].SetProfileDuration(
-                  old_point_(i),
-                  trajectory_->points[trajectory_ptr_].positions[i],
-                  trajectory_->points[trajectory_ptr_].time_from_start.toSec());
+                old_point_(i),
+                trajectory_->points[trajectory_ptr_].positions[i],
+                trajectory_->points[trajectory_ptr_].time_from_start.toSec());
             }
           } else {
             if (trajectory_->points[trajectory_ptr_ - 1].accelerations.size()
                 > 0
                 && trajectory_->points[trajectory_ptr_].accelerations.size()
-                    > 0) {
+                > 0) {
               vel_profile_[i].SetProfileDuration(
-                  trajectory_->points[trajectory_ptr_ - 1].positions[i],
-                  trajectory_->points[trajectory_ptr_ - 1].velocities[i],
-                  trajectory_->points[trajectory_ptr_ - 1].accelerations[i],
-                  trajectory_->points[trajectory_ptr_].positions[i],
-                  trajectory_->points[trajectory_ptr_].velocities[i],
-                  trajectory_->points[trajectory_ptr_].accelerations[i],
-                  (trajectory_->points[trajectory_ptr_].time_from_start
-                      - trajectory_->points[trajectory_ptr_ - 1].time_from_start)
-                      .toSec());
+                trajectory_->points[trajectory_ptr_ - 1].positions[i],
+                trajectory_->points[trajectory_ptr_ - 1].velocities[i],
+                trajectory_->points[trajectory_ptr_ - 1].accelerations[i],
+                trajectory_->points[trajectory_ptr_].positions[i],
+                trajectory_->points[trajectory_ptr_].velocities[i],
+                trajectory_->points[trajectory_ptr_].accelerations[i],
+                (trajectory_->points[trajectory_ptr_].time_from_start
+                 - trajectory_->points[trajectory_ptr_ - 1].time_from_start)
+                .toSec());
             } else if (trajectory_->points[trajectory_ptr_ - 1].velocities.size()
-                > 0
-                && trajectory_->points[trajectory_ptr_].velocities.size() > 0) {
+                       > 0
+                       && trajectory_->points[trajectory_ptr_].velocities.size() > 0) {
               vel_profile_[i].SetProfileDuration(
-                  trajectory_->points[trajectory_ptr_ - 1].positions[i],
-                  trajectory_->points[trajectory_ptr_ - 1].velocities[i],
-                  trajectory_->points[trajectory_ptr_].positions[i],
-                  trajectory_->points[trajectory_ptr_].velocities[i],
-                  (trajectory_->points[trajectory_ptr_].time_from_start
-                      - trajectory_->points[trajectory_ptr_ - 1].time_from_start)
-                      .toSec());
+                trajectory_->points[trajectory_ptr_ - 1].positions[i],
+                trajectory_->points[trajectory_ptr_ - 1].velocities[i],
+                trajectory_->points[trajectory_ptr_].positions[i],
+                trajectory_->points[trajectory_ptr_].velocities[i],
+                (trajectory_->points[trajectory_ptr_].time_from_start
+                 - trajectory_->points[trajectory_ptr_ - 1].time_from_start)
+                .toSec());
             } else {
               vel_profile_[i].SetProfileDuration(
-                  trajectory_->points[trajectory_ptr_ - 1].positions[i],
-                  trajectory_->points[trajectory_ptr_].positions[i],
-                  (trajectory_->points[trajectory_ptr_].time_from_start
-                      - trajectory_->points[trajectory_ptr_ - 1].time_from_start)
-                      .toSec());
+                trajectory_->points[trajectory_ptr_ - 1].positions[i],
+                trajectory_->points[trajectory_ptr_].positions[i],
+                (trajectory_->points[trajectory_ptr_].time_from_start
+                 - trajectory_->points[trajectory_ptr_ - 1].time_from_start)
+                .toSec());
             }
           }
         }
@@ -184,19 +185,16 @@ void InternalSpaceSplineTrajectoryGenerator::updateHook() {
             - trajectory_->points[trajectory_ptr_ - 1].time_from_start.toSec();
       }
 
-      //std::cout << t << std::endl;
-
       for (unsigned int i = 0; i < number_of_joints_; i++) {
         setpoint_(i) = vel_profile_[i].Pos(t);
         // setpoint_.setpoints[i].velocity = velProfile_[i].Vel(time * dt);
         // setpoint_.setpoints[i].acceleration = velProfile_[i].Acc(time * dt);
       }
 
-      //std::cout << "p0 " << setpoint_(0) << std::endl;
     } else if (last_point_not_set_) {
       for (unsigned int i = 0; i < number_of_joints_; i++) {
         setpoint_(i) = trajectory_->points[trajectory_->points.size() - 1]
-            .positions[i];
+                       .positions[i];
       }
       trajectory_ = trajectory_msgs::JointTrajectoryConstPtr();
       last_point_not_set_ = false;
@@ -207,4 +205,5 @@ void InternalSpaceSplineTrajectoryGenerator::updateHook() {
 }
 
 ORO_CREATE_COMPONENT(InternalSpaceSplineTrajectoryGenerator)
+
 

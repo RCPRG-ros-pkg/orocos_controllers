@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, Robot Control and Pattern Recognition Group, Warsaw University of Technology.
+ * Copyright (c) 2010-2014, Robot Control and Pattern Recognition Group, Warsaw University of Technology.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,6 +28,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <string>
+
 #include <rtt/os/TimeService.hpp>
 #include <rtt/Time.hpp>
 #include <rtt/Component.hpp>
@@ -37,63 +39,63 @@
 #include "rtt_rosclock/rtt_rosclock.h"
 
 JointStatePublisher::JointStatePublisher(const std::string& name) :
-		RTT::TaskContext(name, PreOperational), joint_names_prop("joint_names",
-				"number of joints") {
-	ports()->addPort("JointPosition", port_joint_position_);
-	ports()->addPort("JointVelocity", port_joint_velocity_);
-	ports()->addPort("JointEffort", port_joint_effort_);
-	ports()->addPort("joint_state", joint_state_port_);
+  RTT::TaskContext(name, PreOperational), joint_names_prop("joint_names",
+      "number of joints") {
+  ports()->addPort("JointPosition", port_joint_position_);
+  ports()->addPort("JointVelocity", port_joint_velocity_);
+  ports()->addPort("JointEffort", port_joint_effort_);
+  ports()->addPort("joint_state", joint_state_port_);
 
-	this->addProperty(joint_names_prop);
-
+  this->addProperty(joint_names_prop);
 }
 
 JointStatePublisher::~JointStatePublisher() {
 }
 
 bool JointStatePublisher::configureHook() {
-	names_ = joint_names_prop.get();
-	if (names_.empty())
-		return false;
-	number_of_joints_ = names_.size();
+  names_ = joint_names_prop.get();
+  if (names_.empty())
+    return false;
+  number_of_joints_ = names_.size();
 
-	joint_state_.name.resize(number_of_joints_);
-	joint_state_.position.resize(number_of_joints_);
-	joint_state_.velocity.resize(number_of_joints_);
-	joint_state_.effort.resize(number_of_joints_);
+  joint_state_.name.resize(number_of_joints_);
+  joint_state_.position.resize(number_of_joints_);
+  joint_state_.velocity.resize(number_of_joints_);
+  joint_state_.effort.resize(number_of_joints_);
 
-	joint_position_.resize(number_of_joints_);
-	joint_velocity_.resize(number_of_joints_);
-	joint_effort_.resize(number_of_joints_);
+  joint_position_.resize(number_of_joints_);
+  joint_velocity_.resize(number_of_joints_);
+  joint_effort_.resize(number_of_joints_);
 
-	for (unsigned int i = 0; i < number_of_joints_; i++) {
-		joint_state_.name[i] = names_[i].c_str();
-	}
+  for (unsigned int i = 0; i < number_of_joints_; i++) {
+    joint_state_.name[i] = names_[i].c_str();
+  }
 
-	return true;
+  return true;
 }
 
 void JointStatePublisher::updateHook() {
-	if (port_joint_position_.read(joint_position_) == RTT::NewData) {
-		port_joint_velocity_.read(joint_velocity_);
-		port_joint_effort_.read(joint_effort_);
-		if ((joint_position_.size() == number_of_joints_)
-				&& (joint_velocity_.size() == number_of_joints_)
-				&& (joint_effort_.size() == number_of_joints_)) {
-			joint_state_.header.stamp = rtt_rosclock::host_now();
-			for (unsigned int i = 0; i < number_of_joints_; i++) {
-				joint_state_.position[i] = joint_position_[i];
-				joint_state_.velocity[i] = joint_velocity_[i];
-				joint_state_.effort[i] = joint_effort_[i];
-			}
-			joint_state_port_.write(joint_state_);
-		} else {
-			RTT::Logger::log(RTT::Logger::Error)
-					<< "Received servo state have invalid size (received : "
-					<< joint_position_.size() << " " << joint_velocity_.size() << " " << joint_effort_.size() << " expected : "
-					<< number_of_joints_ << " )" << RTT::endlog();
-		}
-	}
+  if (port_joint_position_.read(joint_position_) == RTT::NewData) {
+    port_joint_velocity_.read(joint_velocity_);
+    port_joint_effort_.read(joint_effort_);
+    if ((joint_position_.size() == number_of_joints_)
+        && (joint_velocity_.size() == number_of_joints_)
+        && (joint_effort_.size() == number_of_joints_)) {
+      joint_state_.header.stamp = rtt_rosclock::host_now();
+      for (unsigned int i = 0; i < number_of_joints_; i++) {
+        joint_state_.position[i] = joint_position_[i];
+        joint_state_.velocity[i] = joint_velocity_[i];
+        joint_state_.effort[i] = joint_effort_[i];
+      }
+      joint_state_port_.write(joint_state_);
+    } else {
+      RTT::Logger::log(RTT::Logger::Error)
+          << "Received servo state have invalid size (received : "
+          << joint_position_.size() << " " << joint_velocity_.size() << " " << joint_effort_.size() << " expected : "
+          << number_of_joints_ << " )" << RTT::endlog();
+    }
+  }
 }
 
-ORO_CREATE_COMPONENT( JointStatePublisher )
+ORO_CREATE_COMPONENT(JointStatePublisher)
+

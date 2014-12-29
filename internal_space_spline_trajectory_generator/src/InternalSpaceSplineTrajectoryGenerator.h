@@ -53,33 +53,34 @@
 #include <trajectory_msgs/JointTrajectory.h>
 
 class InternalSpaceSplineTrajectoryGenerator : public RTT::TaskContext {
-public:
-	explicit InternalSpaceSplineTrajectoryGenerator(const std::string& name);
-	virtual ~InternalSpaceSplineTrajectoryGenerator();
+ public:
+  explicit InternalSpaceSplineTrajectoryGenerator(const std::string& name);
+  virtual ~InternalSpaceSplineTrajectoryGenerator();
 
-	virtual bool configureHook();
-	virtual bool startHook();
-	virtual void updateHook();
+  virtual bool configureHook();
+  virtual bool startHook();
+  virtual void updateHook();
 
-protected:
-	RTT::InputPort<trajectory_msgs::JointTrajectoryConstPtr> port_trajectory_;
+ protected:
+  RTT::InputPort<trajectory_msgs::JointTrajectoryConstPtr> port_trajectory_;
 
-	RTT::OutputPort<Eigen::VectorXd > port_internal_space_position_command_;
-	RTT::InputPort<Eigen::VectorXd > port_internal_space_position_measurement_;
+  RTT::OutputPort<Eigen::VectorXd > port_internal_space_position_command_;
+  RTT::InputPort<Eigen::VectorXd > port_internal_space_position_measurement_;
 
-private:
-	bool last_point_not_set_;
-	bool trajectory_active_;
-	std::vector<KDL::VelocityProfile_Spline> vel_profile_;
+ private:
+  bool last_point_not_set_;
+  bool trajectory_active_;
+  std::vector<KDL::VelocityProfile_Spline> vel_profile_;
 
-	trajectory_msgs::JointTrajectoryPoint trajectory_old_;
-	trajectory_msgs::JointTrajectoryPoint trajectory_new_;
+  trajectory_msgs::JointTrajectoryPoint trajectory_old_;
+  trajectory_msgs::JointTrajectoryPoint trajectory_new_;
 
-	Eigen::VectorXd des_jnt_pos_, setpoint_, old_point_;
+  Eigen::VectorXd des_jnt_pos_, setpoint_, old_point_;
 
-	trajectory_msgs::JointTrajectoryConstPtr trajectory_;
-	size_t trajectory_ptr_;
-	int number_of_joints_;
+  trajectory_msgs::JointTrajectoryConstPtr trajectory_;
+  size_t trajectory_ptr_;
+  int number_of_joints_;
 };
 
-#endif /* INTERNALSPACESPLINETRAJECTORYGENERATOR_H_ */
+#endif  // INTERNALSPACESPLINETRAJECTORYGENERATOR_H_
+

@@ -46,14 +46,15 @@
 #include <rtt/Property.hpp>
 
 class FakeServo: public RTT::TaskContext {
-public:
-  FakeServo(const std::string& name);
+ public:
+  explicit FakeServo(const std::string& name);
   virtual ~FakeServo();
 
   bool configureHook();
   bool startHook();
   void updateHook();
-protected:
+
+ protected:
   RTT::InputPort<std::vector<double> > cmd_jnt_pos_port_;
 
   RTT::OutputPort<std::vector<double> > msr_jnt_pos_port_;
@@ -62,14 +63,15 @@ protected:
   RTT::OutputPort<double> command_period_port_;
 
   RTT::Property<int> number_of_joints_prop_;
-private:
+
+ private:
   std::vector<double> jnt_pos_;
 
   std::vector<double> initial_pos_;
 
   double dt_;
-  
+
   unsigned int number_of_joints_;
 };
 
-#endif /* FAKESERVO_H_ */
+#endif  // FAKESERVO_H_

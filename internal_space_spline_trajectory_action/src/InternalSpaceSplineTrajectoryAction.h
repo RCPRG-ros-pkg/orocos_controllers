@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, Robot Control and Pattern Recognition Group, Warsaw University of Technology.
+ * Copyright (c) 2010-2014, Robot Control and Pattern Recognition Group, Warsaw University of Technology.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,8 +37,8 @@
  *      Author: Konrad Banachowicz
  */
 
-#ifndef INTERNALSPACETRAJECTORYACTION_H_
-#define INTERNALSPACETRAJECTORYACTION_H_
+#ifndef INTERNALSPACESPLINETRAJECTORYACTION_H_
+#define INTERNALSPACESPLINETRAJECTORYACTION_H_
 
 #include <string>
 #include <vector>
@@ -63,7 +63,7 @@ class InternalSpaceSplineTrajectoryAction : public RTT::TaskContext {
   typedef boost::shared_ptr<const control_msgs::FollowJointTrajectoryGoal> Goal;
 
  public:
-  InternalSpaceSplineTrajectoryAction(const std::string& name);
+  explicit InternalSpaceSplineTrajectoryAction(const std::string& name);
   virtual ~InternalSpaceSplineTrajectoryAction();
 
   bool configureHook();
@@ -110,4 +110,4 @@ class InternalSpaceSplineTrajectoryAction : public RTT::TaskContext {
   control_msgs::FollowJointTrajectoryFeedback feedback_;
 };
 
-#endif /* INTERNALSPACETRAJECTORYACTION_H_ */
+#endif  // INTERNALSPACESPLINETRAJECTORYACTION_H_
