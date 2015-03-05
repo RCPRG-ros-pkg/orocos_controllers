@@ -1,4 +1,11 @@
 // Copyright WUT 2014
+/*
+ * ForceControlLaw.cpp
+ *
+ *  Created on: 1 July 2014
+ *      Author: twiniars
+ */
+
 #include <rtt/Component.hpp>
 
 #include "ForceControlLaw.h"

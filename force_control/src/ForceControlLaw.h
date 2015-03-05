@@ -1,4 +1,11 @@
 // Copyright WUT 2014
+/*
+ * ForceControlLaw.h
+ *
+ *  Created on: 1 July 2014
+ *      Author: twiniars
+ */
+
 #ifndef FORCECONTROLLAW_H_
 #define FORCECONTROLLAW_H_
 

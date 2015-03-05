@@ -1,4 +1,10 @@
 // Copyright WUT 2015
+/*
+ * WrenchPublisher.cpp
+ *
+ *  Created on: 5 March 2015
+ *      Author: twiniars
+ */
 
 #ifndef WRENCHPUBLISHER_H_
 #define WRENCHPUBLISHER_H_
@@ -22,8 +28,12 @@ class WrenchPublisher : public RTT::TaskContext {
   void updateHook();
 
  private:
-  RTT::InputPort<geometry_msgs::Wrench> port_input_wrist_wrench_;
-  RTT::OutputPort<geometry_msgs::WrenchStamped> port_output_wrist_wrench_;
+  RTT::InputPort<geometry_msgs::Wrench> port_input_wrench_;
+  RTT::OutputPort<geometry_msgs::WrenchStamped> port_output_wrench_stamped_;
+
+  geometry_msgs::WrenchStamped output_wrench_stamped_;
+
+
 };
 
 #endif  // WRENCHPUBLISHER_H_

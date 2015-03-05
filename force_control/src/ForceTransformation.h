@@ -1,4 +1,12 @@
 // Copyright WUT 2014
+/*
+ * ForceTransformation.h
+ *
+ *  Created on: 1 July 2014
+ *      Author: twiniars
+ */
+
+
 #ifndef FORCETRANSFORMATION_H_
 #define FORCETRANSFORMATION_H_
 
