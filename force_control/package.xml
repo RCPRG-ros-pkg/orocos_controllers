@@ -1,0 +1,27 @@
+<package>
+  <name>force_control</name>
+  <version>2.6.0</version>
+  <description>force control</description>
+  <maintainer email="tomrobotics@gmail.com">Tomasz Winiarski</maintainer>
+
+  <license>BSD</license>
+
+  <url type="website"></url>
+
+  <author email="tomrobotics@gmail.com">Tomasz Winiarski</author>
+  
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>rtt</build_depend>
+  <build_depend>rtt_ros</build_depend>
+  <build_depend>force_control_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+
+  <run_depend>rtt</run_depend>
+  <run_depend>rtt_ros</run_depend>
+  <run_depend>force_control_msgs</run_depend>
+  
+  <export>
+    <rtt_plugin_depend>rtt_ros</rtt_plugin_depend>
+  </export>
+</package>
