@@ -16,12 +16,15 @@ WrenchPublisher::WrenchPublisher(const std::string& name)
 
   this->ports()->addPort("InputWrench", port_input_wrench_);
   this->ports()->addPort("OutputWrenchStamped", port_output_wrench_stamped_);
+
+  this->addProperty("frame_id", frame_id_).doc("");
 }
 
 WrenchPublisher::~WrenchPublisher() {
 }
 
 bool WrenchPublisher::configureHook() {
+  output_wrench_stamped_.header.frame_id = frame_id_;
 
   return true;
 }
@@ -35,9 +38,6 @@ void WrenchPublisher::updateHook() {
 
   geometry_msgs::Wrench current_wrench;
   port_input_wrench_.readNewest(current_wrench);
-
-  // frame_id do przeniesienia do rosparam i wczytywania w updatehook
-  output_wrench_stamped_.header.frame_id = "wrist";
 
   output_wrench_stamped_.header.stamp = rtt_rosclock::host_now();
 

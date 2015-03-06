@@ -33,6 +33,9 @@ class WrenchPublisher : public RTT::TaskContext {
 
   geometry_msgs::WrenchStamped output_wrench_stamped_;
 
+  // Properties
+  std::string frame_id_;
+
 
 };
 
