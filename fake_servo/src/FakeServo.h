@@ -31,47 +31,39 @@
 /*
  * FakeServo.h
  *
- *  Created on: 22-09-2010
- *      Author: konrad
+ *  Created on: 2015
+ *      Author: twiniars
  */
 
 #ifndef FAKESERVO_H_
 #define FAKESERVO_H_
 
-#include <string>
-#include <vector>
 
-#include <rtt/TaskContext.hpp>
-#include <rtt/Port.hpp>
-#include <rtt/Property.hpp>
 
-class FakeServo: public RTT::TaskContext {
+
+class FakeServo : public RTT::TaskContext {
  public:
   explicit FakeServo(const std::string& name);
   virtual ~FakeServo();
 
   bool configureHook();
-  bool startHook();
   void updateHook();
 
  protected:
-  RTT::InputPort<std::vector<double> > cmd_jnt_pos_port_;
 
-  RTT::OutputPort<std::vector<double> > msr_jnt_pos_port_;
-  RTT::OutputPort<std::vector<double> > des_jnt_pos_port_;
-
-  RTT::OutputPort<double> command_period_port_;
-
-  RTT::Property<int> number_of_joints_prop_;
+  std::vector<RTT::InputPort<double>*> port_motor_position_command_list_;
+  std::vector<RTT::OutputPort<double>*> port_motor_position_list_;
 
  private:
-  std::vector<double> jnt_pos_;
 
+
+  unsigned int number_of_drives_;
+  std::vector<double> current_pos_;
+
+  // Properties
   std::vector<double> initial_pos_;
 
-  double dt_;
 
-  unsigned int number_of_joints_;
 };
 
 #endif  // FAKESERVO_H_

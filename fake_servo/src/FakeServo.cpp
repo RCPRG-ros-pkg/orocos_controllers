@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2014, Robot Control and Pattern Recognition Group, Warsaw University of Technology.
+ * Copyright (c) 2010-2015, Robot Control and Pattern Recognition Group, Warsaw University of Technology.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,62 +31,76 @@
 /*
  * FakeServo.cpp
  *
- *  Created on: 22-09-2010
- *      Author: Konrad Banachowicz
+ *  Created on: 2015
+ *      Author: Tomasz Winiarski
  */
+
+#include <rtt/TaskContext.hpp>
+#include <rtt/Port.hpp>
+#include <rtt/Component.hpp>
+
+#include <rtt/extras/SlaveActivity.hpp>
+
 #include "FakeServo.h"
 
 #include <string>
 
-#include <ocl/Component.hpp>
+FakeServo::FakeServo(const std::string& name)
+    : RTT::TaskContext(name, PreOperational),
+      number_of_drives_(0) {
 
-FakeServo::FakeServo(const std::string& name) :
-    RTT::TaskContext(name, PreOperational), number_of_joints_prop_("number_of_joints", "", 0) {
-  this->ports()->addPort("JointPositionCommand", cmd_jnt_pos_port_);
-  this->ports()->addPort("JointPosition", msr_jnt_pos_port_);
-  this->ports()->addPort("DesiredJointPosition", des_jnt_pos_port_);
-  this->ports()->addPort("CommandPeriod", command_period_port_);
-
-  this->addProperty(number_of_joints_prop_);
+  this->addProperty("initial_pos", initial_pos_).doc("");
 }
 
 FakeServo::~FakeServo() {
 }
 
 bool FakeServo::configureHook() {
-  if ((number_of_joints_ = number_of_joints_prop_.get()) == 0) {
-    return false;
+
+  number_of_drives_ = initial_pos_.size();
+
+  port_motor_position_command_list_.resize(number_of_drives_);
+  port_motor_position_list_.resize(number_of_drives_);
+  current_pos_.resize(number_of_drives_);
+
+  for (int j = 0; j < number_of_drives_; j++) {
+
+    char MotorPositionCommand_port_name[32];
+    snprintf(MotorPositionCommand_port_name,
+             sizeof(MotorPositionCommand_port_name), "MotorPositionCommand_%d",
+             j);
+    port_motor_position_command_list_[j] =
+        new typeof(*port_motor_position_command_list_[j]);
+    this->ports()->addPort(MotorPositionCommand_port_name,
+                           *port_motor_position_command_list_[j]);
+
+    char MotorPosition_port_name[32];
+    snprintf(MotorPosition_port_name, sizeof(MotorPosition_port_name),
+             "MotorPosition_%d", j);
+    port_motor_position_list_[j] = new typeof(*port_motor_position_list_[j]);
+    this->ports()->addPort(MotorPosition_port_name,
+                           *port_motor_position_list_[j]);
+
+    current_pos_[j] = initial_pos_[j];
+
   }
-  initial_pos_.resize(number_of_joints_);
-  for (unsigned int i = 0; i < number_of_joints_; i++) {
-    RTT::base::PropertyBase* prop;
-    prop = this->getProperty(std::string("joint") + static_cast<char>(i + 48) + "_position");
-    if (prop) {
-      initial_pos_[i] = ((RTT::Property<double>*) prop)->get();
-    } else {
-      initial_pos_[i] = 0.0;
-    }
-  }
-
-  jnt_pos_.resize(number_of_joints_);
-  return true;
-}
-
-bool FakeServo::startHook() {
-  jnt_pos_ = initial_pos_;
-
-  dt_ = this->getPeriod();
 
   return true;
 }
 
 void FakeServo::updateHook() {
-  cmd_jnt_pos_port_.read(jnt_pos_);
 
-  des_jnt_pos_port_.write(jnt_pos_);
-  msr_jnt_pos_port_.write(jnt_pos_);
+  double tmp_pos_command;
 
-  command_period_port_.write(dt_);
+  for (int j = 0; j < number_of_drives_; j++) {
+    if (port_motor_position_command_list_[j]->read(tmp_pos_command)
+        == RTT::NewData) {
+      current_pos_[j] = tmp_pos_command;
+
+    }
+    port_motor_position_list_[j]->write(current_pos_[j]);
+
+  }
 }
 
 ORO_CREATE_COMPONENT(FakeServo)

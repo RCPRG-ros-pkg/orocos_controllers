@@ -2,15 +2,18 @@
   <name>fake_servo</name>
   <version>2.6.0</version>
   <description>fake_servo</description>
-  <maintainer email="konradb3@gmail.com">Konrad Banachowicz</maintainer>
+  <maintainer email="tomrobotics@gmail.com">Tomasz Winiarski</maintainer>
 
   <license>BSD</license>
 
-  <url type="website">http://ros.org/wiki/fake_servo</url>
+  <url type="website"></url>
 
-  <author email="konradb3@gmail.com">Konrad Banachowicz</author>
+  <author email="konradb3@gmail.com">Tomasz Winiarski</author>
   
   <buildtool_depend>catkin</buildtool_depend>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>std_msgs</build_depend> 
 
   <build_depend>rtt</build_depend>
   <build_depend>rtt_ros</build_depend>
