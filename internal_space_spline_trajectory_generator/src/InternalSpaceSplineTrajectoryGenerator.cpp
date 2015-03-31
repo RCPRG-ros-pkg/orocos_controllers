@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, Robot Control and Pattern Recognition Group, Warsaw University of Technology.
+ * Copyright (c) 2010-2015 Robot Control and Pattern Recognition Group, Warsaw University of Technology.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -46,9 +46,10 @@
 InternalSpaceSplineTrajectoryGenerator::InternalSpaceSplineTrajectoryGenerator(
   const std::string& name)
   : RTT::TaskContext(name, PreOperational),
-    trajectory_ptr_(0),
     last_point_not_set_(false),
-    trajectory_active_(false) {
+    trajectory_active_(false),
+    trajectory_ptr_(0),
+    number_of_joints_(0) {
   this->ports()->addPort("trajectoryPtr", port_trajectory_);
   this->ports()->addPort("JointPositionCommand",
                          port_internal_space_position_command_);

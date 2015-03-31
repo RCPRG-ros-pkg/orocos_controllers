@@ -40,7 +40,7 @@
 
 JointStatePublisher::JointStatePublisher(const std::string& name) :
   RTT::TaskContext(name, PreOperational), joint_names_prop("joint_names",
-      "number of joints") {
+      "number of joints"), number_of_joints_(0) {
   ports()->addPort("JointPosition", port_joint_position_);
   ports()->addPort("JointVelocity", port_joint_velocity_);
   ports()->addPort("JointEffort", port_joint_effort_);

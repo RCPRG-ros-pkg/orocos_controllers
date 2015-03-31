@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2014, Robot Control and Pattern Recognition Group, Warsaw University of Technology.
+ * Copyright (c) 2010-2015, Robot Control and Pattern Recognition Group, Warsaw University of Technology.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -116,9 +116,9 @@ void InternalSpaceSplineTrajectoryAction::updateHook() {
   port_joint_position_command_.read(desired_joint_position_);
 
   Goal g = activeGoal_.getGoal();
-  bool violated = false;
 
   if (goal_active_) {
+    bool violated = false;
     ros::Time now = rtt_rosclock::host_now();
 
     if (now > trajectory_finish_time_) {
@@ -153,38 +153,39 @@ void InternalSpaceSplineTrajectoryAction::updateHook() {
         activeGoal_.setSucceeded(res, "");
         goal_active_ = false;
       }
-    }
+    } else {
 
-    // Wysyłanie feedback
+      // Wysyłanie feedback
 
-    for (int i = 0; i < numberOfJoints_; i++) {
-      feedback_.actual.positions[i] = joint_position_[i];
-      feedback_.desired.positions[i] = desired_joint_position_[i];
-      feedback_.error.positions[i] = joint_position_[i] - desired_joint_position_[i];
-    }
+      for (int i = 0; i < numberOfJoints_; i++) {
+        feedback_.actual.positions[i] = joint_position_[i];
+        feedback_.desired.positions[i] = desired_joint_position_[i];
+        feedback_.error.positions[i] = joint_position_[i] - desired_joint_position_[i];
+      }
 
-    feedback_.header.stamp = rtt_rosclock::host_now();
+      feedback_.header.stamp = rtt_rosclock::host_now();
 
-    activeGoal_.publishFeedback(feedback_);
+      activeGoal_.publishFeedback(feedback_);
 
-    // Sprawdzanie PATH_TOLRANCE_VIOLATED
-    violated = false;
-    for (int i = 0; i < g->path_tolerance.size(); i++) {
-      for (int j = 0; j < jointNames_.size(); j++) {
-        if (jointNames_[j] == g->path_tolerance[i].name) {
-          if (fabs(joint_position_[j] - desired_joint_position_[j]) > g->path_tolerance[i].position) {
-            violated = true;
-            RTT::Logger::log(RTT::Logger::Error) << "Path tolerance violated"
+      // Sprawdzanie PATH_TOLRANCE_VIOLATED
+      violated = false;
+      for (int i = 0; i < g->path_tolerance.size(); i++) {
+        for (int j = 0; j < jointNames_.size(); j++) {
+          if (jointNames_[j] == g->path_tolerance[i].name) {
+            if (fabs(joint_position_[j] - desired_joint_position_[j]) > g->path_tolerance[i].position) {
+              violated = true;
+              RTT::Logger::log(RTT::Logger::Error) << "Path tolerance violated"
                                                  << RTT::endlog();
+            }
           }
         }
       }
-    }
-    if (violated) {
-      trajectory_ptr_port_.write(trajectory_msgs::JointTrajectoryConstPtr());
-      res.error_code =
-        control_msgs::FollowJointTrajectoryResult::PATH_TOLERANCE_VIOLATED;
-      activeGoal_.setAborted(res);
+      if (violated) {
+        trajectory_ptr_port_.write(trajectory_msgs::JointTrajectoryConstPtr());
+        res.error_code =
+          control_msgs::FollowJointTrajectoryResult::PATH_TOLERANCE_VIOLATED;
+        activeGoal_.setAborted(res);
+      }
     }
   }
 }
