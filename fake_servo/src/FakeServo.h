@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, Robot Control and Pattern Recognition Group, Warsaw University of Technology.
+ * Copyright (c) 2010-2015 Robot Control and Pattern Recognition Group, Warsaw University of Technology.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,8 +38,8 @@
 #ifndef FAKESERVO_H_
 #define FAKESERVO_H_
 
-
-
+#include <string>
+#include <vector>
 
 class FakeServo : public RTT::TaskContext {
  public:
@@ -50,20 +50,15 @@ class FakeServo : public RTT::TaskContext {
   void updateHook();
 
  protected:
-
   std::vector<RTT::InputPort<double>*> port_motor_position_command_list_;
   std::vector<RTT::OutputPort<double>*> port_motor_position_list_;
 
  private:
-
-
   unsigned int number_of_drives_;
   std::vector<double> current_pos_;
 
   // Properties
   std::vector<double> initial_pos_;
-
-
 };
 
 #endif  // FAKESERVO_H_

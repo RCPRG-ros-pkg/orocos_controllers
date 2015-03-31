@@ -56,7 +56,6 @@ FakeServo::~FakeServo() {
 }
 
 bool FakeServo::configureHook() {
-
   number_of_drives_ = initial_pos_.size();
 
   port_motor_position_command_list_.resize(number_of_drives_);
@@ -64,7 +63,6 @@ bool FakeServo::configureHook() {
   current_pos_.resize(number_of_drives_);
 
   for (int j = 0; j < number_of_drives_; j++) {
-
     char MotorPositionCommand_port_name[32];
     snprintf(MotorPositionCommand_port_name,
              sizeof(MotorPositionCommand_port_name), "MotorPositionCommand_%d",
@@ -82,24 +80,19 @@ bool FakeServo::configureHook() {
                            *port_motor_position_list_[j]);
 
     current_pos_[j] = initial_pos_[j];
-
   }
-
   return true;
 }
 
 void FakeServo::updateHook() {
-
   double tmp_pos_command;
 
   for (int j = 0; j < number_of_drives_; j++) {
     if (port_motor_position_command_list_[j]->read(tmp_pos_command)
         == RTT::NewData) {
       current_pos_[j] = tmp_pos_command;
-
     }
     port_motor_position_list_[j]->write(current_pos_[j]);
-
   }
 }
 
