@@ -154,7 +154,6 @@ void InternalSpaceSplineTrajectoryAction::updateHook() {
         goal_active_ = false;
       }
     } else {
-
       // Wysyłanie feedback
 
       for (int i = 0; i < numberOfJoints_; i++) {
