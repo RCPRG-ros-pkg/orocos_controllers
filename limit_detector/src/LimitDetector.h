@@ -29,7 +29,7 @@
  */
 
 /*
- * FakeServo.h
+ * LimitDetector.h
  *
  *  Created on: 2015
  *      Author: twiniars
@@ -38,6 +38,7 @@
 #ifndef LIMITDETECTOR_H_
 #define LIMITDETECTOR_H_
 
+#include <Eigen/Dense>
 #include <string>
 #include <vector>
 
@@ -50,15 +51,21 @@ class LimitDetector : public RTT::TaskContext {
   void updateHook();
 
  protected:
-  std::vector<RTT::InputPort<double>*> port_motor_position_command_list_;
-  std::vector<RTT::OutputPort<double>*> port_motor_position_list_;
+  RTT::InputPort<Eigen::VectorXd> input_port_;
+  RTT::OutputPort<Eigen::VectorXd> output_port_;
+  RTT::OutputPort<bool> emergency_stop_out_;
 
  private:
-  unsigned int number_of_drives_;
-  std::vector<double> current_pos_;
+  unsigned int number_of_ports_;
+
+  Eigen::VectorXd previous_pos_;
+  Eigen::VectorXd current_pos_;
 
   // Properties
-  std::vector<double> initial_pos_;
+  std::vector<double> upper_pos_limit_;
+  std::vector<double> lower_pos_limit_;
+  std::vector<double> upper_vel_limit_;
+  std::vector<double> lower_vel_limit_;
 };
 
 #endif  // LIMITDETECTOR_H_

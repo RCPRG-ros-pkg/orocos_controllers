@@ -29,7 +29,7 @@
  */
 
 /*
- * FakeServo.cpp
+ * LimitDetector.cpp
  *
  *  Created on: 2015
  *      Author: Tomasz Winiarski
@@ -46,52 +46,56 @@
 
 LimitDetector::LimitDetector(const std::string& name)
     : RTT::TaskContext(name, PreOperational),
-      number_of_drives_(0) {
+      number_of_ports_(0),
+      emergency_stop_out_("EmergencyStopOut") {
 
-  this->addProperty("initial_pos", initial_pos_).doc("");
+  this->addProperty("upper_pos_limit", upper_pos_limit_).doc("");
+  this->addProperty("lower_pos_limit", lower_pos_limit_).doc("");
+  this->addProperty("upper_vel_limit", upper_vel_limit_).doc("");
+  this->addProperty("lower_vel_limit", lower_vel_limit_).doc("");
+
+  this->ports()->addPort("InputPort", input_port_);
+  this->ports()->addPort("OutputPort", output_port_);
+
+  this->addPort(emergency_stop_out_).doc("Emergency Stop Out");
 }
 
 LimitDetector::~LimitDetector() {
 }
 
 bool LimitDetector::configureHook() {
-  number_of_drives_ = initial_pos_.size();
+  number_of_ports_ = upper_pos_limit_.size();
 
-  port_motor_position_command_list_.resize(number_of_drives_);
-  port_motor_position_list_.resize(number_of_drives_);
-  current_pos_.resize(number_of_drives_);
+  if ((number_of_ports_ != lower_pos_limit_.size())
+      || (number_of_ports_ != upper_vel_limit_.size())
+      || (number_of_ports_ != lower_vel_limit_.size())) {
+    return false;
+  }
 
-  for (int j = 0; j < number_of_drives_; j++) {
-    char MotorPositionCommand_port_name[32];
-    snprintf(MotorPositionCommand_port_name,
-             sizeof(MotorPositionCommand_port_name), "MotorPositionCommand_%d",
-             j);
-    port_motor_position_command_list_[j] =
-        new typeof(*port_motor_position_command_list_[j]);
-    this->ports()->addPort(MotorPositionCommand_port_name,
-                           *port_motor_position_command_list_[j]);
+  for (int j = 0; j < number_of_ports_; j++) {
+    previous_pos_.resize(number_of_ports_);
+    current_pos_.resize(number_of_ports_);
 
-    char MotorPosition_port_name[32];
-    snprintf(MotorPosition_port_name, sizeof(MotorPosition_port_name),
-             "MotorPosition_%d", j);
-    port_motor_position_list_[j] = new typeof(*port_motor_position_list_[j]);
-    this->ports()->addPort(MotorPosition_port_name,
-                           *port_motor_position_list_[j]);
-
-    current_pos_[j] = initial_pos_[j];
+    output_port_.setDataSample(current_pos_);
   }
   return true;
 }
 
 void LimitDetector::updateHook() {
-  double tmp_pos_command;
-
-  for (int j = 0; j < number_of_drives_; j++) {
-    if (port_motor_position_command_list_[j]->read(tmp_pos_command)
-        == RTT::NewData) {
-      current_pos_[j] = tmp_pos_command;
+  if (RTT::NewData == input_port_.read(current_pos_)) {
+    bool check_succesed = true;
+    for (int j = 0; j < number_of_ports_; j++) {
+      if (current_pos_[j] < lower_pos_limit_[j]) {
+        check_succesed = false;
+      } else if (current_pos_[j] > upper_pos_limit_[j]) {
+        check_succesed = false;
+      }
     }
-    port_motor_position_list_[j]->write(current_pos_[j]);
+    if (check_succesed) {
+      output_port_.write(current_pos_);
+    } else {
+      emergency_stop_out_.write(true);
+    }
   }
 }
 
