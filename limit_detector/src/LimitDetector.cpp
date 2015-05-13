@@ -42,17 +42,21 @@
 #include <rtt/extras/SlaveActivity.hpp>
 
 #include <string>
+#include "string_colors.h"
 #include "LimitDetector.h"
 
 LimitDetector::LimitDetector(const std::string& name)
     : RTT::TaskContext(name, PreOperational),
       number_of_ports_(0),
-      emergency_stop_out_("EmergencyStopOut") {
+      emergency_stop_out_("EmergencyStopOut"),
+      pos_inc_initiated_(false) {
 
   this->addProperty("upper_pos_limit", upper_pos_limit_).doc("");
   this->addProperty("lower_pos_limit", lower_pos_limit_).doc("");
-  this->addProperty("upper_vel_limit", upper_vel_limit_).doc("");
-  this->addProperty("lower_vel_limit", lower_vel_limit_).doc("");
+  this->addProperty("upper_vel_limit", pos_inc_limit_).doc("");
+  this->addProperty("pos_limit_active", pos_limit_active_).doc("");
+  this->addProperty("pos_inc_limit_active", pos_inc_limit_active_).doc("");
+  this->addProperty("detector_name", detector_name_).doc("");
 
   this->ports()->addPort("InputPort", input_port_);
   this->ports()->addPort("OutputPort", output_port_);
@@ -67,14 +71,16 @@ bool LimitDetector::configureHook() {
   number_of_ports_ = upper_pos_limit_.size();
 
   if ((number_of_ports_ != lower_pos_limit_.size())
-      || (number_of_ports_ != upper_vel_limit_.size())
-      || (number_of_ports_ != lower_vel_limit_.size())) {
+      || (number_of_ports_ != pos_inc_limit_.size())
+      || (number_of_ports_ != pos_limit_active_.size())
+      || (number_of_ports_ != pos_inc_limit_active_.size())) {
     return false;
   }
 
   for (int j = 0; j < number_of_ports_; j++) {
     previous_pos_.resize(number_of_ports_);
     current_pos_.resize(number_of_ports_);
+    pos_inc_.resize(number_of_ports_);
 
     output_port_.setDataSample(current_pos_);
   }
@@ -85,12 +91,37 @@ void LimitDetector::updateHook() {
   if (RTT::NewData == input_port_.read(current_pos_)) {
     bool check_succesed = true;
     for (int j = 0; j < number_of_ports_; j++) {
-      if (current_pos_[j] < lower_pos_limit_[j]) {
-        check_succesed = false;
-      } else if (current_pos_[j] > upper_pos_limit_[j]) {
-        check_succesed = false;
+      if (pos_limit_active_[j]) {
+        if (current_pos_[j] < lower_pos_limit_[j]) {
+          std::cout << std::endl << RED << "[error] limit detector: "
+              << detector_name_ << " lower pos limit axis: " << j << " value: "
+              << current_pos_[j] << RESET << std::endl;
+
+          check_succesed = false;
+        } else if (current_pos_[j] > upper_pos_limit_[j]) {
+          std::cout << std::endl << RED << "[error] limit detector: "
+              << detector_name_ << " upper pos limit axis: " << j << " value: "
+              << current_pos_[j] << RESET << std::endl;
+
+          check_succesed = false;
+        }
+      }
+
+      if ((pos_inc_initiated_) && (pos_inc_limit_active_[j])) {
+        pos_inc_[j] = current_pos_[j] - previous_pos_[j];
+        if (fabs(pos_inc_[j]) > pos_inc_limit_[j]) {
+          std::cout << std::endl << RED << "[error] limit detector: "
+              << detector_name_ << " pos inc limit axis: " << j << " value: "
+              << pos_inc_[j] << RESET << std::endl;
+
+          check_succesed = false;
+        }
       }
     }
+
+    previous_pos_ = current_pos_;
+    pos_inc_initiated_ = true;
+
     if (check_succesed) {
       output_port_.write(current_pos_);
     } else {

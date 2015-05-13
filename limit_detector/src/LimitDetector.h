@@ -57,15 +57,19 @@ class LimitDetector : public RTT::TaskContext {
 
  private:
   unsigned int number_of_ports_;
+  bool pos_inc_initiated_;
 
   Eigen::VectorXd previous_pos_;
   Eigen::VectorXd current_pos_;
+  Eigen::VectorXd pos_inc_;
 
   // Properties
   std::vector<double> upper_pos_limit_;
   std::vector<double> lower_pos_limit_;
-  std::vector<double> upper_vel_limit_;
-  std::vector<double> lower_vel_limit_;
+  std::vector<double> pos_inc_limit_;
+  std::vector<bool> pos_limit_active_;
+  std::vector<bool> pos_inc_limit_active_;
+  std::string detector_name_;
 };
 
 #endif  // LIMITDETECTOR_H_
