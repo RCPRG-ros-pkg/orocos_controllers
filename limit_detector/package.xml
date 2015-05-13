@@ -1,7 +1,7 @@
 <package>
-  <name>fake_servo</name>
+  <name>limit_detector</name>
   <version>2.6.0</version>
-  <description>fake_servo</description>
+  <description>components to detect the position and position incerements limits</description>
   <maintainer email="tomrobotics@gmail.com">Tomasz Winiarski</maintainer>
 
   <license>BSD</license>
