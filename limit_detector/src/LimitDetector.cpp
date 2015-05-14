@@ -77,6 +77,10 @@ bool LimitDetector::configureHook() {
       || (number_of_ports_ != pos_inc_limit_.size())
       || (number_of_ports_ != pos_limit_active_.size())
       || (number_of_ports_ != pos_inc_limit_active_.size())) {
+    std::cout << std::endl << RED << "[error] limit detector " << detector_name_
+              << "configuration failed: wrong properties in launch file."
+              << RESET << std::endl;
+
     return false;
   }
 
