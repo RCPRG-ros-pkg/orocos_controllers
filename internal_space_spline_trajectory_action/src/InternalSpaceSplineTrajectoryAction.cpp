@@ -42,7 +42,6 @@
 #include "rtt_rosclock/rtt_rosclock.h"
 #include "eigen_conversions/eigen_msg.h"
 
-
 InternalSpaceSplineTrajectoryAction::InternalSpaceSplineTrajectoryAction(
     const std::string& name)
     : RTT::TaskContext(name, PreOperational),
@@ -108,90 +107,87 @@ bool InternalSpaceSplineTrajectoryAction::startHook() {
 }
 
 void InternalSpaceSplineTrajectoryAction::updateHook() {
+  bool joint_position_data = true;
+
   if (port_joint_position_.read(joint_position_) == RTT::NoData) {
-    RTT::Logger::log(RTT::Logger::Error) << "No joint_position data, No path tolerance monitoring"
-                                            << RTT::endlog();
-  } else {
-    control_msgs::FollowJointTrajectoryResult res;
+    joint_position_data = false;
 
-    port_joint_position_command_.read(desired_joint_position_);
+  }
+  control_msgs::FollowJointTrajectoryResult res;
 
-    Goal g = activeGoal_.getGoal();
+  port_joint_position_command_.read(desired_joint_position_);
 
-    if (goal_active_) {
-      bool violated = false;
-      ros::Time now = rtt_rosclock::host_now();
+  Goal g = activeGoal_.getGoal();
 
-      if (now > trajectory_finish_time_) {
-        violated = false;
-        for (int i = 0; i < numberOfJoints_; i++) {
-          for (int j = 0; j < g->goal_tolerance.size(); j++) {
-            if (g->goal_tolerance[j].name == g->trajectory.joint_names[i]) {
-              // Jeśli istnieje ograniczenie to sprawdzam pozycję
-              if (joint_position_[remapTable_[i]]
-                  + g->goal_tolerance[j].position
-                  < g->trajectory.points[g->trajectory.points.size() - 1]
-                      .positions[i]
-                  || joint_position_[remapTable_[i]]
-                      - g->goal_tolerance[j].position
-                      > g->trajectory.points[g->trajectory.points.size() - 1]
-                          .positions[i]) {
-                violated = true;
-                RTT::Logger::log(RTT::Logger::Debug)
-                    << g->goal_tolerance[j].name << " violated with position "
-                    << joint_position_[remapTable_[i]] << RTT::endlog();
-              }
+  if (goal_active_ && joint_position_data) {
+    bool violated = false;
+    ros::Time now = rtt_rosclock::host_now();
+
+    if (now > trajectory_finish_time_) {
+      violated = false;
+      for (int i = 0; i < numberOfJoints_; i++) {
+        for (int j = 0; j < g->goal_tolerance.size(); j++) {
+          if (g->goal_tolerance[j].name == g->trajectory.joint_names[i]) {
+            // Jeśli istnieje ograniczenie to sprawdzam pozycję
+            if (joint_position_[remapTable_[i]] + g->goal_tolerance[j].position
+                < g->trajectory.points[g->trajectory.points.size() - 1]
+                    .positions[i]
+                || joint_position_[remapTable_[i]]
+                    - g->goal_tolerance[j].position
+                    > g->trajectory.points[g->trajectory.points.size() - 1]
+                        .positions[i]) {
+              violated = true;
+              RTT::Logger::log(RTT::Logger::Debug) << g->goal_tolerance[j].name
+                  << " violated with position "
+                  << joint_position_[remapTable_[i]] << RTT::endlog();
             }
           }
         }
+      }
 
-        if (violated
-            && now > trajectory_finish_time_ + g->goal_time_tolerance) {
-          res.error_code =
-              control_msgs::FollowJointTrajectoryResult::GOAL_TOLERANCE_VIOLATED;
-          activeGoal_.setAborted(res, "");
-          goal_active_ = false;
-        } else if (!violated) {
-          res.error_code =
-              control_msgs::FollowJointTrajectoryResult::SUCCESSFUL;
-          activeGoal_.setSucceeded(res, "");
-          goal_active_ = false;
-        }
-      } else {
-        // Wysyłanie feedback
+      if (violated && now > trajectory_finish_time_ + g->goal_time_tolerance) {
+        res.error_code =
+            control_msgs::FollowJointTrajectoryResult::GOAL_TOLERANCE_VIOLATED;
+        activeGoal_.setAborted(res, "");
+        goal_active_ = false;
+      } else if (!violated) {
+        res.error_code = control_msgs::FollowJointTrajectoryResult::SUCCESSFUL;
+        activeGoal_.setSucceeded(res, "");
+        goal_active_ = false;
+      }
+    } else {
+      // Wysyłanie feedback
 
-        for (int i = 0; i < numberOfJoints_; i++) {
-          feedback_.actual.positions[i] = joint_position_[i];
-          feedback_.desired.positions[i] = desired_joint_position_[i];
-          feedback_.error.positions[i] = joint_position_[i]
-              - desired_joint_position_[i];
-        }
+      for (int i = 0; i < numberOfJoints_; i++) {
+        feedback_.actual.positions[i] = joint_position_[i];
+        feedback_.desired.positions[i] = desired_joint_position_[i];
+        feedback_.error.positions[i] = joint_position_[i]
+            - desired_joint_position_[i];
+      }
 
-        feedback_.header.stamp = rtt_rosclock::host_now();
+      feedback_.header.stamp = rtt_rosclock::host_now();
 
-        activeGoal_.publishFeedback(feedback_);
+      activeGoal_.publishFeedback(feedback_);
 
-        // Sprawdzanie PATH_TOLRANCE_VIOLATED
-        violated = false;
-        for (int i = 0; i < g->path_tolerance.size(); i++) {
-          for (int j = 0; j < jointNames_.size(); j++) {
-            if (jointNames_[j] == g->path_tolerance[i].name) {
-              if (fabs(joint_position_[j] - desired_joint_position_[j])
-                  > g->path_tolerance[i].position) {
-                violated = true;
-                RTT::Logger::log(RTT::Logger::Error)
-                    << "Path tolerance violated" << RTT::endlog();
-              }
+      // Sprawdzanie PATH_TOLRANCE_VIOLATED
+      violated = false;
+      for (int i = 0; i < g->path_tolerance.size(); i++) {
+        for (int j = 0; j < jointNames_.size(); j++) {
+          if (jointNames_[j] == g->path_tolerance[i].name) {
+            if (fabs(joint_position_[j] - desired_joint_position_[j])
+                > g->path_tolerance[i].position) {
+              violated = true;
+              RTT::Logger::log(RTT::Logger::Error) << "Path tolerance violated"
+                                                   << RTT::endlog();
             }
           }
         }
-        if (violated) {
-          trajectory_ptr_port_.write(
-              trajectory_msgs::JointTrajectoryConstPtr());
-          res.error_code =
-              control_msgs::FollowJointTrajectoryResult::PATH_TOLERANCE_VIOLATED;
-          activeGoal_.setAborted(res);
-        }
+      }
+      if (violated) {
+        trajectory_ptr_port_.write(trajectory_msgs::JointTrajectoryConstPtr());
+        res.error_code =
+            control_msgs::FollowJointTrajectoryResult::PATH_TOLERANCE_VIOLATED;
+        activeGoal_.setAborted(res);
       }
     }
   }
