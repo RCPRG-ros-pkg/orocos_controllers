@@ -42,6 +42,7 @@
 #include <rtt/extras/SlaveActivity.hpp>
 
 #include <string>
+#include <cmath>
 #include "string_colors.h"
 #include "LimitDetector.h"
 
@@ -98,6 +99,14 @@ void LimitDetector::updateHook() {
   if (RTT::NewData == input_port_.read(current_pos_)) {
     bool check_succesed = true;
     for (int j = 0; j < number_of_ports_; j++) {
+      if (!(std::isfinite(current_pos_[j]))) {
+        std::cout << std::endl << RED << "[error] limit detector: "
+               << detector_name_ << " infinite limit axis: " << j
+               << " value: " << current_pos_[j] << RESET << std::endl;
+
+        check_succesed = false;
+      }
+
       if (pos_limit_active_[j]) {
         if (current_pos_[j] < lower_pos_limit_[j]) {
           if (console_notification_active_) {
