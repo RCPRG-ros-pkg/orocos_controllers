@@ -97,14 +97,14 @@ bool LimitDetector::configureHook() {
 
 void LimitDetector::updateHook() {
   if (RTT::NewData == input_port_.read(current_pos_)) {
-    bool check_succesed = true;
+    bool check_succeed = true;
     for (int j = 0; j < number_of_ports_; j++) {
       if (!(std::isfinite(current_pos_[j]))) {
         std::cout << std::endl << RED << "[error] limit detector: "
                << detector_name_ << " infinite limit axis: " << j
                << " value: " << current_pos_[j] << RESET << std::endl;
 
-        check_succesed = false;
+        check_succeed = false;
       }
 
       if (pos_limit_active_[j]) {
@@ -115,14 +115,14 @@ void LimitDetector::updateHook() {
                 << " value: " << current_pos_[j] << RESET << std::endl;
           }
 
-          check_succesed = false;
+          check_succeed = false;
         } else if (current_pos_[j] > upper_pos_limit_[j]) {
           if (console_notification_active_) {
             std::cout << std::endl << RED << "[error] limit detector: "
                 << detector_name_ << " upper pos limit axis: " << j
                 << " value: " << current_pos_[j] << RESET << std::endl;
           }
-          check_succesed = false;
+          check_succeed = false;
         }
       }
 
@@ -134,12 +134,12 @@ void LimitDetector::updateHook() {
                 << detector_name_ << " pos inc limit axis: " << j << " value: "
                 << pos_inc_[j] << RESET << std::endl;
           }
-          check_succesed = false;
+          check_succeed = false;
         }
       }
     }
 
-    if (check_succesed) {
+    if (check_succeed) {
       previous_pos_ = current_pos_;
       pos_inc_initiated_ = true;
       output_port_.write(current_pos_);
