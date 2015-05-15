@@ -36,33 +36,33 @@
  */
 
 #include "InternalSpaceSplineTrajectoryAction.h"
-
+#include <ocl/Component.hpp>
 #include <string>
 
-#include <ocl/Component.hpp>
 #include "rtt_rosclock/rtt_rosclock.h"
 #include "eigen_conversions/eigen_msg.h"
 
+
 InternalSpaceSplineTrajectoryAction::InternalSpaceSplineTrajectoryAction(
-  const std::string& name)
-  : RTT::TaskContext(name, PreOperational),
-    numberOfJoints_prop_("number_of_joints", "", 0),
-    command_port_("command") {
+    const std::string& name)
+    : RTT::TaskContext(name, PreOperational),
+      numberOfJoints_prop_("number_of_joints", "", 0),
+      command_port_("command") {
   // Add action server ports to this task's root service
   as_.addPorts(this->provides());
 
   // Bind action server goal and cancel callbacks (see below)
   as_.registerGoalCallback(
-    boost::bind(&InternalSpaceSplineTrajectoryAction::goalCB, this, _1));
+      boost::bind(&InternalSpaceSplineTrajectoryAction::goalCB, this, _1));
   as_.registerCancelCallback(
-    boost::bind(&InternalSpaceSplineTrajectoryAction::cancelCB, this, _1));
+      boost::bind(&InternalSpaceSplineTrajectoryAction::cancelCB, this, _1));
 
   this->addPort("trajectoryPtr", trajectory_ptr_port_);
   this->addPort("JointPosition", port_joint_position_);
   this->addPort("JointPositionCommand", port_joint_position_command_);
   this->addEventPort(
-    command_port_,
-    boost::bind(&InternalSpaceSplineTrajectoryAction::commandCB, this));
+      command_port_,
+      boost::bind(&InternalSpaceSplineTrajectoryAction::commandCB, this));
   this->addProperty("joint_names", jointNames_);
   this->addProperty("lower_limits", lowerLimits_);
   this->addProperty("upper_limits", upperLimits_);
@@ -109,81 +109,89 @@ bool InternalSpaceSplineTrajectoryAction::startHook() {
 
 void InternalSpaceSplineTrajectoryAction::updateHook() {
   if (port_joint_position_.read(joint_position_) == RTT::NoData) {
-  }
+    RTT::Logger::log(RTT::Logger::Error) << "No joint_position data, No path tolerance monitoring"
+                                            << RTT::endlog();
+  } else {
+    control_msgs::FollowJointTrajectoryResult res;
 
-  control_msgs::FollowJointTrajectoryResult res;
+    port_joint_position_command_.read(desired_joint_position_);
 
-  port_joint_position_command_.read(desired_joint_position_);
+    Goal g = activeGoal_.getGoal();
 
-  Goal g = activeGoal_.getGoal();
+    if (goal_active_) {
+      bool violated = false;
+      ros::Time now = rtt_rosclock::host_now();
 
-  if (goal_active_) {
-    bool violated = false;
-    ros::Time now = rtt_rosclock::host_now();
-
-    if (now > trajectory_finish_time_) {
-      violated = false;
-      for (int i = 0; i < numberOfJoints_; i++) {
-        for (int j = 0; j < g->goal_tolerance.size(); j++) {
-          if (g->goal_tolerance[j].name == g->trajectory.joint_names[i]) {
-            // Jeśli istnieje ograniczenie to sprawdzam pozycję
-            if (joint_position_[remapTable_[i]] + g->goal_tolerance[j].position
-                < g->trajectory.points[g->trajectory.points.size() - 1]
-                .positions[i]
-                || joint_position_[remapTable_[i]]
-                - g->goal_tolerance[j].position
-                > g->trajectory.points[g->trajectory.points.size() - 1]
-                .positions[i]) {
-              violated = true;
-              RTT::Logger::log(RTT::Logger::Debug) << g->goal_tolerance[j].name
-                                                   << " violated with position "
-                                                   << joint_position_[remapTable_[i]] << RTT::endlog();
+      if (now > trajectory_finish_time_) {
+        violated = false;
+        for (int i = 0; i < numberOfJoints_; i++) {
+          for (int j = 0; j < g->goal_tolerance.size(); j++) {
+            if (g->goal_tolerance[j].name == g->trajectory.joint_names[i]) {
+              // Jeśli istnieje ograniczenie to sprawdzam pozycję
+              if (joint_position_[remapTable_[i]]
+                  + g->goal_tolerance[j].position
+                  < g->trajectory.points[g->trajectory.points.size() - 1]
+                      .positions[i]
+                  || joint_position_[remapTable_[i]]
+                      - g->goal_tolerance[j].position
+                      > g->trajectory.points[g->trajectory.points.size() - 1]
+                          .positions[i]) {
+                violated = true;
+                RTT::Logger::log(RTT::Logger::Debug)
+                    << g->goal_tolerance[j].name << " violated with position "
+                    << joint_position_[remapTable_[i]] << RTT::endlog();
+              }
             }
           }
         }
-      }
 
-      if (violated && now > trajectory_finish_time_ + g->goal_time_tolerance) {
-        res.error_code =
-          control_msgs::FollowJointTrajectoryResult::GOAL_TOLERANCE_VIOLATED;
-        activeGoal_.setAborted(res, "");
-        goal_active_ = false;
-      } else if (!violated) {
-        res.error_code = control_msgs::FollowJointTrajectoryResult::SUCCESSFUL;
-        activeGoal_.setSucceeded(res, "");
-        goal_active_ = false;
-      }
-    } else {
-      // Wysyłanie feedback
+        if (violated
+            && now > trajectory_finish_time_ + g->goal_time_tolerance) {
+          res.error_code =
+              control_msgs::FollowJointTrajectoryResult::GOAL_TOLERANCE_VIOLATED;
+          activeGoal_.setAborted(res, "");
+          goal_active_ = false;
+        } else if (!violated) {
+          res.error_code =
+              control_msgs::FollowJointTrajectoryResult::SUCCESSFUL;
+          activeGoal_.setSucceeded(res, "");
+          goal_active_ = false;
+        }
+      } else {
+        // Wysyłanie feedback
 
-      for (int i = 0; i < numberOfJoints_; i++) {
-        feedback_.actual.positions[i] = joint_position_[i];
-        feedback_.desired.positions[i] = desired_joint_position_[i];
-        feedback_.error.positions[i] = joint_position_[i] - desired_joint_position_[i];
-      }
+        for (int i = 0; i < numberOfJoints_; i++) {
+          feedback_.actual.positions[i] = joint_position_[i];
+          feedback_.desired.positions[i] = desired_joint_position_[i];
+          feedback_.error.positions[i] = joint_position_[i]
+              - desired_joint_position_[i];
+        }
 
-      feedback_.header.stamp = rtt_rosclock::host_now();
+        feedback_.header.stamp = rtt_rosclock::host_now();
 
-      activeGoal_.publishFeedback(feedback_);
+        activeGoal_.publishFeedback(feedback_);
 
-      // Sprawdzanie PATH_TOLRANCE_VIOLATED
-      violated = false;
-      for (int i = 0; i < g->path_tolerance.size(); i++) {
-        for (int j = 0; j < jointNames_.size(); j++) {
-          if (jointNames_[j] == g->path_tolerance[i].name) {
-            if (fabs(joint_position_[j] - desired_joint_position_[j]) > g->path_tolerance[i].position) {
-              violated = true;
-              RTT::Logger::log(RTT::Logger::Error) << "Path tolerance violated"
-                                                 << RTT::endlog();
+        // Sprawdzanie PATH_TOLRANCE_VIOLATED
+        violated = false;
+        for (int i = 0; i < g->path_tolerance.size(); i++) {
+          for (int j = 0; j < jointNames_.size(); j++) {
+            if (jointNames_[j] == g->path_tolerance[i].name) {
+              if (fabs(joint_position_[j] - desired_joint_position_[j])
+                  > g->path_tolerance[i].position) {
+                violated = true;
+                RTT::Logger::log(RTT::Logger::Error)
+                    << "Path tolerance violated" << RTT::endlog();
+              }
             }
           }
         }
-      }
-      if (violated) {
-        trajectory_ptr_port_.write(trajectory_msgs::JointTrajectoryConstPtr());
-        res.error_code =
-          control_msgs::FollowJointTrajectoryResult::PATH_TOLERANCE_VIOLATED;
-        activeGoal_.setAborted(res);
+        if (violated) {
+          trajectory_ptr_port_.write(
+              trajectory_msgs::JointTrajectoryConstPtr());
+          res.error_code =
+              control_msgs::FollowJointTrajectoryResult::PATH_TOLERANCE_VIOLATED;
+          activeGoal_.setAborted(res);
+        }
       }
     }
   }
@@ -192,7 +200,7 @@ void InternalSpaceSplineTrajectoryAction::updateHook() {
 void InternalSpaceSplineTrajectoryAction::goalCB(GoalHandle gh) {
   if (!goal_active_) {
     trajectory_msgs::JointTrajectory* trj_ptr =
-      new trajectory_msgs::JointTrajectory;
+        new trajectory_msgs::JointTrajectory;
     Goal g = gh.getGoal();
 
     control_msgs::FollowJointTrajectoryResult res;
@@ -214,7 +222,7 @@ void InternalSpaceSplineTrajectoryAction::goalCB(GoalHandle gh) {
         RTT::Logger::log(RTT::Logger::Error)
             << "Trajectory contains invalid joint" << RTT::endlog();
         res.error_code =
-          control_msgs::FollowJointTrajectoryResult::INVALID_JOINTS;
+            control_msgs::FollowJointTrajectoryResult::INVALID_JOINTS;
         gh.setRejected(res, "");
         return;
       } else {
@@ -228,7 +236,7 @@ void InternalSpaceSplineTrajectoryAction::goalCB(GoalHandle gh) {
       for (int j = 0; j < g->trajectory.points.size(); j++) {
         if (g->trajectory.points[j].positions[i] > upperLimits_[remapTable_[i]]
             || g->trajectory.points[j].positions[i]
-            < lowerLimits_[remapTable_[i]]) {
+                < lowerLimits_[remapTable_[i]]) {
           RTT::Logger::log(RTT::Logger::Debug)
               << "Invalid goal [" << i << "]: " << upperLimits_[remapTable_[i]]
               << ">" << g->trajectory.points[j].positions[i] << ">"
@@ -253,31 +261,31 @@ void InternalSpaceSplineTrajectoryAction::goalCB(GoalHandle gh) {
 
     for (unsigned int i = 0; i < g->trajectory.points.size(); i++) {
       trj_ptr->points[i].positions.resize(
-        g->trajectory.points[i].positions.size());
+          g->trajectory.points[i].positions.size());
       for (unsigned int j = 0; j < g->trajectory.points[i].positions.size();
-           j++) {
+          j++) {
         trj_ptr->points[i].positions[j] =
-          g->trajectory.points[i].positions[remapTable_[j]];
+            g->trajectory.points[i].positions[remapTable_[j]];
       }
 
       trj_ptr->points[i].velocities.resize(
-        g->trajectory.points[i].velocities.size());
+          g->trajectory.points[i].velocities.size());
       for (unsigned int j = 0; j < g->trajectory.points[i].velocities.size();
-           j++) {
+          j++) {
         trj_ptr->points[i].velocities[j] =
-          g->trajectory.points[i].velocities[remapTable_[j]];
+            g->trajectory.points[i].velocities[remapTable_[j]];
       }
 
       trj_ptr->points[i].accelerations.resize(
-        g->trajectory.points[i].accelerations.size());
+          g->trajectory.points[i].accelerations.size());
       for (unsigned int j = 0; j < g->trajectory.points[i].accelerations.size();
-           j++) {
+          j++) {
         trj_ptr->points[i].accelerations[j] = g->trajectory.points[i]
-                                              .accelerations[remapTable_[j]];
+            .accelerations[remapTable_[j]];
       }
 
       trj_ptr->points[i].time_from_start = g->trajectory.points[i]
-                                           .time_from_start;
+          .time_from_start;
     }
 
     // Sprawdzenie czasu w nagłówku OLD_HEADER_TIMESTAMP
@@ -285,12 +293,12 @@ void InternalSpaceSplineTrajectoryAction::goalCB(GoalHandle gh) {
       RTT::Logger::log(RTT::Logger::Debug) << "Old header timestamp"
                                            << RTT::endlog();
       res.error_code =
-        control_msgs::FollowJointTrajectoryResult::OLD_HEADER_TIMESTAMP;
+          control_msgs::FollowJointTrajectoryResult::OLD_HEADER_TIMESTAMP;
       gh.setRejected(res, "");
     }
 
     trajectory_finish_time_ = g->trajectory.header.stamp
-                              + g->trajectory.points[g->trajectory.points.size() - 1].time_from_start;
+        + g->trajectory.points[g->trajectory.points.size() - 1].time_from_start;
 
     activeGoal_ = gh;
     goal_active_ = true;
@@ -306,7 +314,7 @@ void InternalSpaceSplineTrajectoryAction::goalCB(GoalHandle gh) {
 
     if (ok) {
       trajectory_msgs::JointTrajectoryConstPtr trj_cptr =
-        trajectory_msgs::JointTrajectoryConstPtr(trj_ptr);
+          trajectory_msgs::JointTrajectoryConstPtr(trj_ptr);
 
       trajectory_ptr_port_.write(trj_cptr);
 
