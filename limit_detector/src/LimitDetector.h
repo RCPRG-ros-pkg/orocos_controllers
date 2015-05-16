@@ -64,8 +64,8 @@ class LimitDetector : public RTT::TaskContext {
   Eigen::VectorXd pos_inc_;
 
   // Properties
-  std::vector<double> upper_pos_limit_;
-  std::vector<double> lower_pos_limit_;
+  std::vector<double> upper_limits_;
+  std::vector<double> lower_limits_;
   std::vector<double> pos_inc_limit_;
   std::vector<bool> pos_limit_active_;
   std::vector<bool> pos_inc_limit_active_;

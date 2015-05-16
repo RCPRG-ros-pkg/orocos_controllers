@@ -53,8 +53,8 @@ LimitDetector::LimitDetector(const std::string& name)
       pos_inc_initiated_(false),
       console_notification_active_(false) {
 
-  this->addProperty("lower_pos_limit", lower_pos_limit_).doc("");
-  this->addProperty("upper_pos_limit", upper_pos_limit_).doc("");
+  this->addProperty("lower_limits", lower_limits_).doc("");
+  this->addProperty("upper_limits", upper_limits_).doc("");
   this->addProperty("pos_inc_limit", pos_inc_limit_).doc("");
   this->addProperty("pos_limit_active", pos_limit_active_).doc("");
   this->addProperty("pos_inc_limit_active", pos_inc_limit_active_).doc("");
@@ -72,9 +72,9 @@ LimitDetector::~LimitDetector() {
 }
 
 bool LimitDetector::configureHook() {
-  number_of_ports_ = upper_pos_limit_.size();
+  number_of_ports_ = upper_limits_.size();
 
-  if ((number_of_ports_ != lower_pos_limit_.size())
+  if ((number_of_ports_ != lower_limits_.size())
       || (number_of_ports_ != pos_inc_limit_.size())
       || (number_of_ports_ != pos_limit_active_.size())
       || (number_of_ports_ != pos_inc_limit_active_.size())) {
@@ -108,7 +108,7 @@ void LimitDetector::updateHook() {
       }
 
       if (pos_limit_active_[j]) {
-        if (current_pos_[j] < lower_pos_limit_[j]) {
+        if (current_pos_[j] < lower_limits_[j]) {
           if (console_notification_active_) {
             std::cout << std::endl << RED << "[error] limit detector: "
                 << detector_name_ << " lower pos limit axis: " << j
@@ -116,7 +116,7 @@ void LimitDetector::updateHook() {
           }
 
           check_succeed = false;
-        } else if (current_pos_[j] > upper_pos_limit_[j]) {
+        } else if (current_pos_[j] > upper_limits_[j]) {
           if (console_notification_active_) {
             std::cout << std::endl << RED << "[error] limit detector: "
                 << detector_name_ << " upper pos limit axis: " << j
