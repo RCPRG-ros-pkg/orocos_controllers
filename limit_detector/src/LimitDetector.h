@@ -58,6 +58,8 @@ class LimitDetector : public RTT::TaskContext {
  private:
   unsigned int number_of_ports_;
   bool pos_inc_initiated_;
+  uint64_t step_nr;
+  bool last_step_valid;
 
   Eigen::VectorXd previous_pos_;
   Eigen::VectorXd current_pos_;

@@ -51,7 +51,9 @@ LimitDetector::LimitDetector(const std::string& name)
       number_of_ports_(0),
       emergency_stop_out_("EmergencyStopOut"),
       pos_inc_initiated_(false),
-      console_notification_active_(false) {
+      console_notification_active_(false),
+      step_nr(0),
+      last_step_valid(true) {
 
   this->addProperty("lower_limits", lower_limits_).doc("");
   this->addProperty("upper_limits", upper_limits_).doc("");
@@ -96,31 +98,39 @@ bool LimitDetector::configureHook() {
 }
 
 void LimitDetector::updateHook() {
+  step_nr++;
   if (RTT::NewData == input_port_.read(current_pos_)) {
     bool check_succeed = true;
+
+    bool write_to_console = console_notification_active_ && last_step_valid;
+
     for (int j = 0; j < number_of_ports_; j++) {
       if (!(std::isfinite(current_pos_[j]))) {
-        std::cout << std::endl << RED << "[error] limit detector: "
-               << detector_name_ << " infinite limit axis: " << j
-               << " value: " << current_pos_[j] << RESET << std::endl;
-
+        if (write_to_console) {
+          std::cout << std::endl << RED << "[error] limit detector: "
+              << detector_name_ << " step nr: " << step_nr
+              << " infinite limit axis: " << j << " value: " << current_pos_[j]
+              << RESET << std::endl;
+        }
         check_succeed = false;
       }
 
       if (pos_limit_active_[j]) {
         if (current_pos_[j] < lower_limits_[j]) {
-          if (console_notification_active_) {
+          if (write_to_console) {
             std::cout << std::endl << RED << "[error] limit detector: "
-                << detector_name_ << " lower pos limit axis: " << j
-                << " value: " << current_pos_[j] << RESET << std::endl;
+                << detector_name_ << " step nr: " << step_nr
+                << " lower pos limit axis: " << j << " value: "
+                << current_pos_[j] << RESET << std::endl;
           }
 
           check_succeed = false;
         } else if (current_pos_[j] > upper_limits_[j]) {
-          if (console_notification_active_) {
+          if (write_to_console) {
             std::cout << std::endl << RED << "[error] limit detector: "
-                << detector_name_ << " upper pos limit axis: " << j
-                << " value: " << current_pos_[j] << RESET << std::endl;
+                << detector_name_ << " step nr: " << step_nr
+                << " upper pos limit axis: " << j << " value: "
+                << current_pos_[j] << RESET << std::endl;
           }
           check_succeed = false;
         }
@@ -129,10 +139,11 @@ void LimitDetector::updateHook() {
       if ((pos_inc_initiated_) && (pos_inc_limit_active_[j])) {
         pos_inc_[j] = current_pos_[j] - previous_pos_[j];
         if (fabs(pos_inc_[j]) > pos_inc_limit_[j]) {
-          if (console_notification_active_) {
+          if (write_to_console) {
             std::cout << std::endl << RED << "[error] limit detector: "
-                << detector_name_ << " pos inc limit axis: " << j << " value: "
-                << pos_inc_[j] << RESET << std::endl;
+                << detector_name_ << " step nr: " << step_nr
+                << " pos inc limit axis: " << j << " value: " << pos_inc_[j]
+                << RESET << std::endl;
           }
           check_succeed = false;
         }
@@ -143,8 +154,18 @@ void LimitDetector::updateHook() {
       previous_pos_ = current_pos_;
       pos_inc_initiated_ = true;
       output_port_.write(current_pos_);
+      if (!last_step_valid) {
+        if (console_notification_active_) {
+          std::cout << std::endl << RED << "limit detector: " << detector_name_
+                    << " step nr: " << step_nr << "valid values reestablished"
+                    << RESET << std::endl;
+        }
+      }
+
+      last_step_valid = true;
     } else {
       emergency_stop_out_.write(true);
+      last_step_valid = false;
     }
   }
 }
