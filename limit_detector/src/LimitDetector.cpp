@@ -157,7 +157,7 @@ void LimitDetector::updateHook() {
       if (!last_step_valid) {
         if (console_notification_active_) {
           std::cout << std::endl << RED << "limit detector: " << detector_name_
-                    << " step nr: " << step_nr << "valid values reestablished"
+                    << " step nr: " << step_nr << " valid values reestablished"
                     << RESET << std::endl;
         }
       }
