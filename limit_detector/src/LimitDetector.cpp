@@ -60,7 +60,6 @@ LimitDetector::LimitDetector(const std::string& name)
   this->addProperty("pos_inc_limit", pos_inc_limit_).doc("");
   this->addProperty("pos_limit_active", pos_limit_active_).doc("");
   this->addProperty("pos_inc_limit_active", pos_inc_limit_active_).doc("");
-  this->addProperty("detector_name", detector_name_).doc("");
   this->addProperty("console_notification_active", console_notification_active_)
       .doc("");
 
@@ -80,7 +79,7 @@ bool LimitDetector::configureHook() {
       || (number_of_ports_ != pos_inc_limit_.size())
       || (number_of_ports_ != pos_limit_active_.size())
       || (number_of_ports_ != pos_inc_limit_active_.size())) {
-    std::cout << std::endl << RED << "[error] limit detector " << detector_name_
+    std::cout << std::endl << RED << "[error] limit detector " << getName()
               << "configuration failed: wrong properties in launch file."
               << RESET << std::endl;
 
@@ -108,7 +107,7 @@ void LimitDetector::updateHook() {
       if (!(std::isfinite(current_pos_[j]))) {
         if (write_to_console) {
           std::cout << std::endl << RED << "[error] limit detector: "
-              << detector_name_ << " step nr: " << step_nr
+              << getName() << " step nr: " << step_nr
               << " infinite limit axis: " << j << " value: " << current_pos_[j]
               << RESET << std::endl;
         }
@@ -119,7 +118,7 @@ void LimitDetector::updateHook() {
         if (current_pos_[j] < lower_limits_[j]) {
           if (write_to_console) {
             std::cout << std::endl << RED << "[error] limit detector: "
-                << detector_name_ << " step nr: " << step_nr
+                << getName() << " step nr: " << step_nr
                 << " lower pos limit axis: " << j << " value: "
                 << current_pos_[j] << RESET << std::endl;
           }
@@ -128,7 +127,7 @@ void LimitDetector::updateHook() {
         } else if (current_pos_[j] > upper_limits_[j]) {
           if (write_to_console) {
             std::cout << std::endl << RED << "[error] limit detector: "
-                << detector_name_ << " step nr: " << step_nr
+                << getName() << " step nr: " << step_nr
                 << " upper pos limit axis: " << j << " value: "
                 << current_pos_[j] << RESET << std::endl;
           }
@@ -141,7 +140,7 @@ void LimitDetector::updateHook() {
         if (fabs(pos_inc_[j]) > pos_inc_limit_[j]) {
           if (write_to_console) {
             std::cout << std::endl << RED << "[error] limit detector: "
-                << detector_name_ << " step nr: " << step_nr
+                << getName() << " step nr: " << step_nr
                 << " pos inc limit axis: " << j << " value: " << pos_inc_[j]
                 << RESET << std::endl;
           }
@@ -156,7 +155,7 @@ void LimitDetector::updateHook() {
       output_port_.write(current_pos_);
       if (!last_step_valid) {
         if (console_notification_active_) {
-          std::cout << std::endl << RED << "limit detector: " << detector_name_
+          std::cout << std::endl << RED << "limit detector: " << getName()
                     << " step nr: " << step_nr << " valid values reestablished"
                     << RESET << std::endl;
         }

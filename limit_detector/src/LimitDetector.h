@@ -71,7 +71,6 @@ class LimitDetector : public RTT::TaskContext {
   std::vector<double> pos_inc_limit_;
   std::vector<bool> pos_limit_active_;
   std::vector<bool> pos_inc_limit_active_;
-  std::string detector_name_;
   bool console_notification_active_;
 };
 
