@@ -30,9 +30,6 @@
 
 #ifndef FORCECONTROLLAW_H_
 #define FORCECONTROLLAW_H_
-
-#include <string>
-
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
 #include <geometry_msgs/Pose.h>
@@ -41,6 +38,9 @@
 #include <Eigen/Dense>
 #include <kdl/frames.hpp>
 #include <force_control_msgs/ForceControl.h>
+#include <string>
+
+
 
 class ForceControlLaw : public RTT::TaskContext {
  public:
@@ -49,6 +49,7 @@ class ForceControlLaw : public RTT::TaskContext {
 
   virtual bool configureHook();
   virtual bool startHook();
+  virtual void stopHook();
   void updateHook();
 
   double fcl(const double & rdam, const double & inertia, const double & fm,
@@ -61,6 +62,8 @@ class ForceControlLaw : public RTT::TaskContext {
   RTT::InputPort<geometry_msgs::Wrench> port_current_end_effector_wrench_;
 
   RTT::InputPort<force_control_msgs::ForceControl> port_current_fcl_param_;
+  RTT::OutputPort<bool> port_generator_active_;
+  RTT::InputPort<bool> port_is_synchronised_;
 
   KDL::Frame cl_ef_pose_kdl_;
   KDL::Twist p_vel_;

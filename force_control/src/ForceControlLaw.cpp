@@ -27,10 +27,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <string>
-
 #include <rtt/Component.hpp>
+#include <string>
 
 #include "ForceControlLaw.h"
 #include "eigen_conversions/eigen_msg.h"
@@ -47,6 +45,8 @@ ForceControlLaw::ForceControlLaw(const std::string& name)
   this->ports()->addPort("CurrentEndEffectorWrench",
                          port_current_end_effector_wrench_);
   this->ports()->addPort("CurrentFclParam", port_current_fcl_param_);
+  this->ports()->addPort("GeneratorActiveOut", port_generator_active_);
+  this->ports()->addPort("IsSynchronisedIn", port_is_synchronised_);
 }
 
 ForceControlLaw::~ForceControlLaw() {
@@ -57,6 +57,7 @@ bool ForceControlLaw::configureHook() {
 }
 
 bool ForceControlLaw::startHook() {
+  bool is_synchronised = true;
   // tool determination
   geometry_msgs::Pose cl_ef_pose;
   if (port_current_end_effector_pose_.read(cl_ef_pose) == RTT::NoData) {
@@ -70,11 +71,22 @@ bool ForceControlLaw::startHook() {
   if (port_current_fcl_param_.read(fcl_param) == RTT::NoData) {
     return false;
   }
+  port_is_synchronised_.read(is_synchronised);
 
+  if (!is_synchronised) {
+    return false;
+  }
+
+  port_generator_active_.write(true);
   return true;
 }
 
+void ForceControlLaw::stopHook() {
+  port_generator_active_.write(false);
+}
+
 void ForceControlLaw::updateHook() {
+  port_generator_active_.write(true);
   // current wrench determination
   geometry_msgs::Wrench current_end_effector_wrench;
   port_current_end_effector_wrench_.read(current_end_effector_wrench);
