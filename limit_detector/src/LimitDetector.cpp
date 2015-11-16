@@ -86,13 +86,12 @@ bool LimitDetector::configureHook() {
     return false;
   }
 
-  for (int j = 0; j < number_of_ports_; j++) {
-    previous_pos_.resize(number_of_ports_);
-    current_pos_.resize(number_of_ports_);
-    pos_inc_.resize(number_of_ports_);
+  previous_pos_.resize(number_of_ports_);
+  current_pos_.resize(number_of_ports_);
+  pos_inc_.resize(number_of_ports_);
 
-    output_port_.setDataSample(current_pos_);
-  }
+  output_port_.setDataSample(current_pos_);
+
   return true;
 }
 
@@ -135,7 +134,7 @@ void LimitDetector::updateHook() {
         }
       }
 
-      if ((pos_inc_initiated_) && (pos_inc_limit_active_[j])) {
+      if ((pos_inc_initiated_) &&(pos_inc_limit_active_[j])) {
         pos_inc_[j] = current_pos_[j] - previous_pos_[j];
         if (fabs(pos_inc_[j]) > pos_inc_limit_[j]) {
           if (write_to_console) {
