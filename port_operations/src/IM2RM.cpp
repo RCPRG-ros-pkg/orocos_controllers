@@ -33,34 +33,35 @@
 #include <rtt/Component.hpp>
 #include <string>
 
-IM2RM::IM2RM(const std::string& name)
-    : RTT::TaskContext(name, PreOperational) {
-  this->ports()->addPort("RadianMotorPosition", port_radian_motor_position_);
-  this->ports()->addPort("IncrementalMotorPosition",
-                         port_incremental_motor_position_);
+IM2RM::IM2RM(const std::string& name) :
+		RTT::TaskContext(name, PreOperational) {
+	this->ports()->addPort("RadianMotorPosition", port_radian_motor_position_);
+	this->ports()->addPort("IncrementalMotorPosition",
+			port_incremental_motor_position_);
 
-  this->addProperty("enc_res", enc_res_).doc("");
-  this->addProperty("number_of_servos", number_of_servos_).doc("");
+	this->addProperty("enc_res", enc_res_).doc("");
 }
 
 IM2RM::~IM2RM() {
 }
 
 bool IM2RM::configureHook() {
-  incremental_motor_position_.resize(number_of_servos_);
-  radian_motor_position_.resize(number_of_servos_);
-  return true;
+	number_of_servos_ = enc_res_.size();
+	incremental_motor_position_.resize(number_of_servos_);
+	radian_motor_position_.resize(number_of_servos_);
+	return true;
 }
 
 void IM2RM::updateHook() {
-  if (RTT::NewData
-      == port_incremental_motor_position_.read(incremental_motor_position_)) {
-    for (int i = 0; i < number_of_servos_; i++) {
-      radian_motor_position_[i] = incremental_motor_position_[i] * (2.0 * M_PI)
-          / enc_res_;
-    }
-    port_radian_motor_position_.write(radian_motor_position_);
-  }
+	if (RTT::NewData
+			== port_incremental_motor_position_.read(
+					incremental_motor_position_)) {
+		for (int i = 0; i < number_of_servos_; i++) {
+			radian_motor_position_[i] = incremental_motor_position_[i]
+					* (2.0 * M_PI) / enc_res_[i];
+		}
+		port_radian_motor_position_.write(radian_motor_position_);
+	}
 }
 
 ORO_CREATE_COMPONENT(IM2RM)
