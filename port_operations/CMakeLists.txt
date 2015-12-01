@@ -10,6 +10,9 @@ find_package(Eigen REQUIRED)
 
 include_directories(${catkin_INCLUDE_DIRS} ${Eigen_INCLUDE_DIRS})
 
+orocos_component(im2rm src/IM2RM.cpp)
+target_link_libraries(im2rm ${catkin_LIBRARIES})
+
 orocos_component(port_double_split src/PortDoubleSplit.cpp)
 target_link_libraries(port_double_split ${catkin_LIBRARIES})
 
