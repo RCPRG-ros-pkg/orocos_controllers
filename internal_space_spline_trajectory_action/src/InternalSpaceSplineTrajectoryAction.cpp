@@ -77,10 +77,10 @@ bool InternalSpaceSplineTrajectoryAction::configureHook() {
 
   numberOfJoints_ = jointNames_.size();
 
-  feedback_.actual.positions.reserve(numberOfJoints_);
-  feedback_.desired.positions.reserve(numberOfJoints_);
-  feedback_.error.positions.reserve(numberOfJoints_);
-  feedback_.joint_names.reserve(numberOfJoints_);
+  feedback_.actual.positions.resize(numberOfJoints_);
+  feedback_.desired.positions.resize(numberOfJoints_);
+  feedback_.error.positions.resize(numberOfJoints_);
+  feedback_.joint_names.resize(numberOfJoints_);
 
   for (int i = 0; i < jointNames_.size(); i++) {
     feedback_.joint_names.push_back(jointNames_[i]);
