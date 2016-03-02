@@ -36,7 +36,7 @@
  */
 
 #include "InternalSpaceSplineTrajectoryAction.h"
-#include <ocl/Component.hpp>
+#include <rtt/Component.hpp>
 #include <string>
 
 #include "rtt_rosclock/rtt_rosclock.h"
