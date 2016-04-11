@@ -103,6 +103,7 @@ class ECManager : public RTT::TaskContext {
   bool configureHook();
   bool startHook();
   void updateHook();
+  void resetFault();
 };
 
 #endif  // ECMANAGER_H_

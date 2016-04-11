@@ -42,6 +42,7 @@ ECManager::ECManager(const std::string& name)
   this->addProperty("debug", debug_).doc("");
   this->addProperty("services_names", services_names_).doc("");
   this->addProperty("regulators_names", regulators_names_).doc("");
+  this->addOperation("resetFault", &ECManager::resetFault, this, RTT::OwnThread).doc("");;
 }
 
 ECManager::~ECManager() {
@@ -168,6 +169,17 @@ void ECManager::updateHook() {
           default:
             break;
     }
+  }
+}
+
+void ECManager::resetFault() {
+  for (int i = 0; i < number_of_servos_; i++)
+  {
+    RTT::OperationCaller<bool(void)> resetFault;
+
+    resetFault = EC->provides(services_names_[i])->getOperation("resetFault");
+    resetFault.setCaller(this->engine());
+    resetFault();
   }
 }
 
