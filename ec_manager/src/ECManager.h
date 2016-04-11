@@ -90,6 +90,7 @@ class ECManager : public RTT::TaskContext {
 
   // Properties
   bool debug_;
+  bool fault_autoreset_;
   std::string hal_component_name_;
   std::string scheme_component_name_;
   std::string service_;

@@ -38,6 +38,7 @@ ECManager::ECManager(const std::string& name)
   this->addProperty("hal_component_name", hal_component_name_).doc("");
   this->addProperty("scheme_component_name", scheme_component_name_).doc("");
   this->addProperty("debug", debug_).doc("");
+  this->addProperty("fault_autoreset", fault_autoreset_).doc("");
   this->addProperty("service", service_).doc("");
   this->addProperty("regulator", regulator_).doc("");
 }
@@ -157,9 +158,12 @@ void ECManager::updateHook() {
       break;
 
     case FAULT:
-      resetFault = EC->provides(service_)->getOperation("resetFault");
-      resetFault.setCaller(this->engine());
-      resetFault();
+      if (fault_autoreset_)
+      {
+        resetFault = EC->provides(service_)->getOperation("resetFault");
+        resetFault.setCaller(this->engine());
+        resetFault();
+      }
       break;
 
     default:
