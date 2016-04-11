@@ -48,6 +48,7 @@
 #include <vector>
 
 typedef enum {
+  NOT_OPERATIONAL,
   NOT_SYNCHRONIZED,
   SYNCHRONIZING,
   SYNCHRONIZED,
@@ -74,23 +75,30 @@ typedef enum {
   QUICK_STOP_ACTIVE = 6,
   FAULT_REACTION_ACTIVE = 7,
   FAULT = 8
-} ServoState;
+} ECServoState;
 
 class ECManager : public RTT::TaskContext {
  private:
   TaskContext * EC;
   TaskContext * Scheme;
 
-  State state_;
   ControlMode control_mode_;
-  ServoState servo_state_;
+
+  State robot_state_;
+  std::vector<State> servo_state_;
+
+  ECServoState ec_servo_state_;
 
   int number_of_servos_;
+  int last_servo_synchro_;
+  int servos_state_changed_;
   std::vector<std::string> disable_vec_;
   std::vector<std::string> enable_vec_;
 
   // Properties
   bool debug_;
+  bool fault_autoreset_;
+  bool sequent_synchro_;
   std::string hal_component_name_;
   std::string scheme_component_name_;
   std::vector<std::string> services_names_;
@@ -103,7 +111,7 @@ class ECManager : public RTT::TaskContext {
   bool configureHook();
   bool startHook();
   void updateHook();
-  void resetFault();
+  void resetF();
 };
 
 #endif  // ECMANAGER_H_
