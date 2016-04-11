@@ -8,7 +8,5 @@ ros_generate_rtt_service_proxies(force_control_msgs)
 
 orocos_generate_package(
   DEPENDS force_control_msgs
-  DEPENDS_TARGETS rtt_roscomm  rtt_std_msgs
- rtt_rosgraph_msgs
-
+  DEPENDS_TARGETS rtt_roscomm  rtt_std_msgs rtt_geometry_msgs
 )
