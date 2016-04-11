@@ -1,0 +1,37 @@
+<package>
+  <name>ec_manager</name>
+  <version>0.0.2</version>
+  <description>EC manager</description>
+  <maintainer email="bartswis@gmail.com">Bartosz Świstak</maintainer>
+
+  <license>BSD</license>
+
+  <url type="website"></url>
+  <!-- <url type="bugtracker"></url> -->
+
+  <author email="bartswis@gmail.com">Bartosz Świstak</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>rtt</build_depend> 
+  <build_depend>rtt_ros</build_depend> 
+  <build_depend>std_msgs</build_depend> 
+
+  <run_depend>rtt</run_depend> 
+  <run_depend>rtt_ros</run_depend> 
+  <run_depend>rtt_rosnode</run_depend> 
+  <run_depend>rtt_roscomm</run_depend> 
+  <run_depend>rtt_rosparam</run_depend> 
+  <run_depend>rtt_std_msgs</run_depend> 
+  <run_depend>rtt_std_srvs</run_depend>
+
+  <export>
+    <rtt_ros>
+      <plugin_depend>rtt_rosnode</plugin_depend>
+      <plugin_depend>rtt_roscomm</plugin_depend>
+      <plugin_depend>rtt_rosparam</plugin_depend>
+      <plugin_depend>rtt_std_msgs</plugin_depend>
+      <plugin_depend>rtt_std_srvs</plugin_depend>
+    </rtt_ros>
+  </export>
+</package>
