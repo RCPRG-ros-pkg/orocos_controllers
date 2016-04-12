@@ -29,17 +29,26 @@
  */
 
 #include "ECManager.h"
+#include "string_colors.h"
 #include <vector>
 #include <string>
 
 ECManager::ECManager(const std::string& name)
-    : TaskContext(name),
-      state_(NOT_SYNCHRONIZED) {
+: TaskContext(name),
+  robot_state_(NOT_OPERATIONAL),
+  number_of_servos_(0),
+  last_servo_synchro_(0),
+  servos_state_changed_(0),
+  msg_(false){
   this->addProperty("hal_component_name", hal_component_name_).doc("");
   this->addProperty("scheme_component_name", scheme_component_name_).doc("");
   this->addProperty("debug", debug_).doc("");
-  this->addProperty("service", service_).doc("");
-  this->addProperty("regulator", regulator_).doc("");
+  this->addProperty("sequent_synchro", sequent_synchro_).doc("");
+  this->addProperty("fault_autoreset", fault_autoreset_).doc("");
+  this->addProperty("services_names", services_names_).doc("");
+  this->addProperty("regulators_names", regulators_names_).doc("");
+  this->addOperation("resetFault", &ECManager::resetAll, this, RTT::OwnThread).doc("");
+  this->addOperation("enable", &ECManager::enableAll, this, RTT::OwnThread).doc("");
 }
 
 ECManager::~ECManager() {
@@ -48,6 +57,23 @@ ECManager::~ECManager() {
 bool ECManager::configureHook() {
   if (hal_component_name_.empty() || scheme_component_name_.empty()) {
     return false;
+  }
+
+  number_of_servos_ = services_names_.size();
+  if (number_of_servos_ != regulators_names_.size()) {
+    std::cout << std::endl << RED << "[error] EC Manager "
+        << "configuration failed: wrong properties vector length in launch file."
+        << RESET << std::endl;
+    return false;
+  }
+  if (debug_) {
+    std::cout << "servos: " << number_of_servos_ << std::endl;
+  }
+
+  servo_state_.resize(number_of_servos_);
+  for (int i=0; i < number_of_servos_; i++)
+  {
+    servo_state_[i] = NOT_OPERATIONAL;
   }
 
   return true;
@@ -62,109 +88,191 @@ bool ECManager::startHook() {
     std::cout << "EC_running:" << EC->isRunning() << std::endl;
     std::cout << "Scheme_active:" << Scheme->isActive() << std::endl;
     std::cout << "Scheme_running:" << Scheme->isRunning() << std::endl;
-
-    std::cout << EC->provides(service_) << std::endl;
-    std::vector < std::string > att_vec = EC->provides(service_)
-        ->getAttributeNames();
-    std::vector < std::string > ope_vec = EC->provides(service_)
-        ->getOperationNames();
-
-    for (int i = 0; i < ope_vec.size(); i++) {
-      std::cout << service_ << "." << ope_vec[i] << std::endl;
-    }
-    for (int i = 0; i < att_vec.size(); i++) {
-      std::cout << service_ << "." << att_vec[i] << std::endl;
-    }
   }
+
+  resetAll();
 
   return true;
 }
 
 void ECManager::updateHook() {
-  RTT::Attribute<ServoState> * servo_state = (RTT::Attribute<ServoState> *) EC
-      ->provides(service_)->getAttribute("state");
-  RTT::Attribute<State> * homing = (RTT::Attribute<State> *) EC->provides(
-      service_)->getAttribute("homing_done");
 
-  servo_state_ = servo_state->get();
+  switch (robot_state_) {
 
-  if (debug_) {
-    std::cout << service_ << ".state = " << servo_state_ << std::endl;
-    std::cout << service_ << ".homing_done = " << homing->get() << std::endl;
-  }
+    case NOT_OPERATIONAL:
 
-  RTT::OperationCaller<bool(void)> enable;
-  RTT::OperationCaller<bool(void)> resetFault;
-  RTT::OperationCaller<bool(void)> beginHoming;
-  RTT::OperationCaller<
-      bool(const std::vector<std::string> &disable_block_names,
-           const std::vector<std::string> &enable_block_names,
-           const bool strict, const bool force)> switchBlocks;
-
-  switch (servo_state_) {
-    case INVALID:
-      break;
-
-    case NOT_READY_TO_SWITCH_ON:
-      break;
-
-    case SWITCH_ON_DISABLED:
-      break;
-
-    case READY_TO_SWITCH_ON:
-      break;
-
-    case SWITCH_ON:
-      enable = EC->provides(service_)->getOperation("enable");
-      enable.setCaller(this->engine());
-      enable();
-      break;
-
-    case OPERATION_ENABLED:
-
-      switch (state_) {
-        case NOT_SYNCHRONIZED:
-          beginHoming = EC->provides(service_)->getOperation("beginHoming");
-          beginHoming.setCaller(this->engine());
-          beginHoming();
-          state_ = SYNCHRONIZING;
-          break;
-        case SYNCHRONIZING:
-          if (homing->get())
-            state_ = SYNCHRONIZED;
-          break;
-        case SYNCHRONIZED:
-          disable_vec_.clear();
-          enable_vec_.clear();
-          enable_vec_.push_back(regulator_);
-          switchBlocks = Scheme->getOperation("switchBlocks");
-          switchBlocks.setCaller(this->engine());
-          switchBlocks(disable_vec_, enable_vec_, true, true);
-          state_ = RUNNING;
-          break;
-        case RUNNING:
-          break;
-        default:
-          break;
+      if (!msg_)
+      {
+        std::cout << std::endl << "ROBOT NOT OPERATIONAL" << std::endl;
+        msg_ = true;
       }
 
+      for (int i = 0; i < number_of_servos_; i++)
+      {
+        if (servo_state_[i] != NOT_SYNCHRONIZED)
+        {
+          RTT::Attribute<ECServoState> * servo_ec_state = (RTT::Attribute<ECServoState> *) EC
+              ->provides(services_names_[i])->getAttribute("state");
+          ec_servo_state_ = servo_ec_state->get();
+
+          // set "enable" if powered on
+          if (ec_servo_state_ == SWITCH_ON)
+          {
+            RTT::OperationCaller<bool(void)> enable;
+            enable = EC->provides(services_names_[i])->getOperation("enable");
+            enable.setCaller(this->engine());
+            enable();
+          }
+
+          // servo enabled
+          if (ec_servo_state_ == OPERATION_ENABLED)
+          {
+            std::cout << services_names_[i] << ": ENABLED" << std::endl;
+            servo_state_[i] = NOT_SYNCHRONIZED;
+            ++servos_state_changed_;
+          }
+        }
+      }
+
+      // all servos enabled
+      if (servos_state_changed_ == number_of_servos_)
+      {
+        robot_state_ = NOT_SYNCHRONIZED;
+        std::cout << "ROBOT NOT SYNCHRONIZED" << std::endl;
+        servos_state_changed_ = 0;
+      }
       break;
 
-    case QUICK_STOP_ACTIVE:
+    case NOT_SYNCHRONIZED:
+      for (int i = 0; i < number_of_servos_; i++)
+      {
+        RTT::Attribute<ECServoState> * servo_state = (RTT::Attribute<ECServoState> *) EC
+            ->provides(services_names_[i])->getAttribute("state");
+        ec_servo_state_ = servo_state->get();
+
+        if (ec_servo_state_ == OPERATION_ENABLED)
+        {
+          switch (servo_state_[i]) {
+            case NOT_SYNCHRONIZED:
+              if (sequent_synchro_)
+              {
+                // next servo in line
+                if (i == last_servo_synchro_)
+                {
+                  RTT::OperationCaller<bool(void)> beginHoming;
+                  beginHoming = EC->provides(services_names_[i])->getOperation("beginHoming");
+                  beginHoming.setCaller(this->engine());
+                  beginHoming();
+                  servo_state_[i] = SYNCHRONIZING;
+                  std::cout << services_names_[i] << ": SYNCHRONIZING" << std::endl;
+                }
+              }
+              else
+              {
+                RTT::OperationCaller<bool(void)> beginHoming;
+                beginHoming = EC->provides(services_names_[i])->getOperation("beginHoming");
+                beginHoming.setCaller(this->engine());
+                beginHoming();
+                servo_state_[i] = SYNCHRONIZING;
+                std::cout << services_names_[i] << ": SYNCHRONIZING" << std::endl;
+              }
+              break;
+            case SYNCHRONIZING:
+              RTT::Attribute<State> * homing = (RTT::Attribute<State> *) EC->provides(
+                  services_names_[i])->getAttribute("homing_done");
+              if (homing->get())
+              {
+                servo_state_[i] = SYNCHRONIZED;
+                std::cout << services_names_[i] << ": SYNCHRONIZED" << std::endl;
+                last_servo_synchro_ = i+1;
+                ++servos_state_changed_;
+              }
+              break;
+          }
+        }
+      }
+      // all servos synhronized
+      if (servos_state_changed_ == number_of_servos_)
+      {
+        robot_state_ = SYNCHRONIZED;
+        std::cout << "ROBOT SYNCHRONIZED" << std::endl;
+        servos_state_changed_ = 0;
+      }
       break;
 
-    case FAULT_REACTION_ACTIVE:
+    case SYNCHRONIZED:
+
+      // switch Regulators
+      for (int i = 0; i < number_of_servos_; i++)
+      {
+        disable_vec_.clear();
+        enable_vec_.clear();
+        enable_vec_.push_back(regulators_names_[i]);
+        RTT::OperationCaller<
+        bool(const std::vector<std::string> &disable_block_names,
+             const std::vector<std::string> &enable_block_names,
+             const bool strict, const bool force)> switchBlocks;
+        switchBlocks = Scheme->getOperation("switchBlocks");
+        switchBlocks.setCaller(this->engine());
+        switchBlocks(disable_vec_, enable_vec_, true, true);
+        std::cout << regulators_names_[i] << ": ENABLED" << std::endl;
+      }
+
+      robot_state_ = RUNNING;
+      std::cout << "ROBOT READY" << std::endl;
       break;
 
-    case FAULT:
-      resetFault = EC->provides(service_)->getOperation("resetFault");
-      resetFault.setCaller(this->engine());
-      resetFault();
+    case RUNNING:
+      if (fault_autoreset_)
+      {
+        resetAll();
+        enableAll();
+      }
       break;
-
     default:
       break;
   }
+}
+
+bool ECManager::resetAll() {
+  bool out = true;
+  for (int i = 0; i < number_of_servos_; i++)
+  {
+    RTT::Attribute<ECServoState> * servo_ec_state = (RTT::Attribute<ECServoState> *) EC
+        ->provides(services_names_[i])->getAttribute("state");
+    ec_servo_state_ = servo_ec_state->get();
+
+    // set "resetFault" if fault
+    if (ec_servo_state_ == FAULT)
+    {
+
+      RTT::OperationCaller<bool(void)> resetFault;
+      resetFault = EC->provides(services_names_[i])->getOperation("resetFault");
+      resetFault.setCaller(this->engine());
+      out = out && resetFault();
+    }
+  }
+  return out;
+}
+
+bool ECManager::enableAll() {
+  bool out = true;
+  for (int i = 0; i < number_of_servos_; i++)
+  {
+    RTT::Attribute<ECServoState> * servo_ec_state = (RTT::Attribute<ECServoState> *) EC
+        ->provides(services_names_[i])->getAttribute("state");
+    ec_servo_state_ = servo_ec_state->get();
+
+    // set "enable" if powered on
+    if (ec_servo_state_ == SWITCH_ON)
+    {
+      RTT::OperationCaller<bool(void)> enable;
+      enable = EC->provides(services_names_[i])->getOperation("enable");
+      enable.setCaller(this->engine());
+      out = out && enable();
+    }
+  }
+  return out;
 }
 
 ORO_CREATE_COMPONENT(ECManager)
