@@ -38,7 +38,8 @@ ECManager::ECManager(const std::string& name)
   robot_state_(NOT_OPERATIONAL),
   number_of_servos_(0),
   last_servo_synchro_(0),
-  servos_state_changed_(0){
+  servos_state_changed_(0),
+  msg_(false){
   this->addProperty("hal_component_name", hal_component_name_).doc("");
   this->addProperty("scheme_component_name", scheme_component_name_).doc("");
   this->addProperty("debug", debug_).doc("");
@@ -46,7 +47,8 @@ ECManager::ECManager(const std::string& name)
   this->addProperty("fault_autoreset", fault_autoreset_).doc("");
   this->addProperty("services_names", services_names_).doc("");
   this->addProperty("regulators_names", regulators_names_).doc("");
-  this->addOperation("resetFault", &ECManager::resetF, this, RTT::OwnThread).doc("");;
+  this->addOperation("resetFault", &ECManager::resetAll, this, RTT::OwnThread).doc("");
+  this->addOperation("enable", &ECManager::enableAll, this, RTT::OwnThread).doc("");
 }
 
 ECManager::~ECManager() {
@@ -88,6 +90,8 @@ bool ECManager::startHook() {
     std::cout << "Scheme_running:" << Scheme->isRunning() << std::endl;
   }
 
+  resetAll();
+
   return true;
 }
 
@@ -96,26 +100,37 @@ void ECManager::updateHook() {
   switch (robot_state_) {
 
     case NOT_OPERATIONAL:
+
+      if (!msg_)
+      {
+        std::cout << std::endl << "ROBOT NOT OPERATIONAL" << std::endl;
+        msg_ = true;
+      }
+
       for (int i = 0; i < number_of_servos_; i++)
       {
-        RTT::Attribute<ECServoState> * servo_ec_state = (RTT::Attribute<ECServoState> *) EC
-            ->provides(services_names_[i])->getAttribute("state");
-        ec_servo_state_ = servo_ec_state->get();
-
-        // set "enable" if powered on
-        if (ec_servo_state_ == SWITCH_ON)
+        if (servo_state_[i] != NOT_SYNCHRONIZED)
         {
-          RTT::OperationCaller<bool(void)> enable;
-          enable = EC->provides(services_names_[i])->getOperation("enable");
-          enable.setCaller(this->engine());
-          enable();
-        }
+          RTT::Attribute<ECServoState> * servo_ec_state = (RTT::Attribute<ECServoState> *) EC
+              ->provides(services_names_[i])->getAttribute("state");
+          ec_servo_state_ = servo_ec_state->get();
 
-        // servo enable
-        if (ec_servo_state_ == OPERATION_ENABLED)
-        {
-          servo_state_[i] = NOT_SYNCHRONIZED;
-          ++servos_state_changed_;
+          // set "enable" if powered on
+          if (ec_servo_state_ == SWITCH_ON)
+          {
+            RTT::OperationCaller<bool(void)> enable;
+            enable = EC->provides(services_names_[i])->getOperation("enable");
+            enable.setCaller(this->engine());
+            enable();
+          }
+
+          // servo enabled
+          if (ec_servo_state_ == OPERATION_ENABLED)
+          {
+            std::cout << services_names_[i] << ": ENABLED" << std::endl;
+            servo_state_[i] = NOT_SYNCHRONIZED;
+            ++servos_state_changed_;
+          }
         }
       }
 
@@ -123,6 +138,7 @@ void ECManager::updateHook() {
       if (servos_state_changed_ == number_of_servos_)
       {
         robot_state_ = NOT_SYNCHRONIZED;
+        std::cout << "ROBOT NOT SYNCHRONIZED" << std::endl;
         servos_state_changed_ = 0;
       }
       break;
@@ -148,6 +164,7 @@ void ECManager::updateHook() {
                   beginHoming.setCaller(this->engine());
                   beginHoming();
                   servo_state_[i] = SYNCHRONIZING;
+                  std::cout << services_names_[i] << ": SYNCHRONIZING" << std::endl;
                 }
               }
               else
@@ -157,6 +174,7 @@ void ECManager::updateHook() {
                 beginHoming.setCaller(this->engine());
                 beginHoming();
                 servo_state_[i] = SYNCHRONIZING;
+                std::cout << services_names_[i] << ": SYNCHRONIZING" << std::endl;
               }
               break;
             case SYNCHRONIZING:
@@ -165,6 +183,7 @@ void ECManager::updateHook() {
               if (homing->get())
               {
                 servo_state_[i] = SYNCHRONIZED;
+                std::cout << services_names_[i] << ": SYNCHRONIZED" << std::endl;
                 last_servo_synchro_ = i+1;
                 ++servos_state_changed_;
               }
@@ -176,11 +195,14 @@ void ECManager::updateHook() {
       if (servos_state_changed_ == number_of_servos_)
       {
         robot_state_ = SYNCHRONIZED;
+        std::cout << "ROBOT SYNCHRONIZED" << std::endl;
         servos_state_changed_ = 0;
       }
       break;
 
     case SYNCHRONIZED:
+
+      // switch Regulators
       for (int i = 0; i < number_of_servos_; i++)
       {
         disable_vec_.clear();
@@ -193,20 +215,18 @@ void ECManager::updateHook() {
         switchBlocks = Scheme->getOperation("switchBlocks");
         switchBlocks.setCaller(this->engine());
         switchBlocks(disable_vec_, enable_vec_, true, true);
+        std::cout << regulators_names_[i] << ": ENABLED" << std::endl;
       }
+
       robot_state_ = RUNNING;
+      std::cout << "ROBOT READY" << std::endl;
       break;
 
     case RUNNING:
       if (fault_autoreset_)
       {
-        for (int i = 0; i < number_of_servos_; i++)
-        {
-          RTT::OperationCaller<bool(void)> resetFault;
-          resetFault = EC->provides(services_names_[i])->getOperation("resetFault");
-          resetFault.setCaller(this->engine());
-          resetFault();
-        }
+        resetAll();
+        enableAll();
       }
       break;
     default:
@@ -214,14 +234,45 @@ void ECManager::updateHook() {
   }
 }
 
-void ECManager::resetF() {
+bool ECManager::resetAll() {
+  bool out = true;
   for (int i = 0; i < number_of_servos_; i++)
   {
-    RTT::OperationCaller<bool(void)> resetFault;
-    resetFault = EC->provides(services_names_[i])->getOperation("resetFault");
-    resetFault.setCaller(this->engine());
-    resetFault();
+    RTT::Attribute<ECServoState> * servo_ec_state = (RTT::Attribute<ECServoState> *) EC
+        ->provides(services_names_[i])->getAttribute("state");
+    ec_servo_state_ = servo_ec_state->get();
+
+    // set "resetFault" if fault
+    if (ec_servo_state_ == FAULT)
+    {
+
+      RTT::OperationCaller<bool(void)> resetFault;
+      resetFault = EC->provides(services_names_[i])->getOperation("resetFault");
+      resetFault.setCaller(this->engine());
+      out = out && resetFault();
+    }
   }
+  return out;
+}
+
+bool ECManager::enableAll() {
+  bool out = true;
+  for (int i = 0; i < number_of_servos_; i++)
+  {
+    RTT::Attribute<ECServoState> * servo_ec_state = (RTT::Attribute<ECServoState> *) EC
+        ->provides(services_names_[i])->getAttribute("state");
+    ec_servo_state_ = servo_ec_state->get();
+
+    // set "enable" if powered on
+    if (ec_servo_state_ == SWITCH_ON)
+    {
+      RTT::OperationCaller<bool(void)> enable;
+      enable = EC->provides(services_names_[i])->getOperation("enable");
+      enable.setCaller(this->engine());
+      out = out && enable();
+    }
+  }
+  return out;
 }
 
 ORO_CREATE_COMPONENT(ECManager)
