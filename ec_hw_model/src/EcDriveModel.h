@@ -74,8 +74,12 @@ class EcDriveModel {
   void update();
 
  private:
-  RTT::InputPort<double> port_desired_input_;
+  RTT::InputPort<double> port_motor_position_command_;
+  RTT::InputPort<double> port_motor_velocity_command_;
+  RTT::InputPort<double> port_motor_current_command_;
   RTT::OutputPort<double> port_motor_position_;
+  RTT::OutputPort<double> port_motor_velocity_;
+  RTT::OutputPort<double> port_motor_current_;
 
   bool enable();
   void disable();
@@ -84,7 +88,7 @@ class EcDriveModel {
 
  protected:
   RTT::Service::shared_ptr service_;
-  double enc_motor_position_, motor_position_, motor_velocity_,
+  double enc_motor_position_, enc_motor_velocity_, motor_position_, motor_velocity_,
       motor_acceleration_, desired_input_, desired_torque_, effective_torque_;
 
   int iteration_per_step_, step_per_second_;

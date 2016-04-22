@@ -40,6 +40,7 @@ EcDriveModel::EcDriveModel(const std::string &name, int iteration_per_step,
                            double viscous_friction)
     : service_(new RTT::Service(name)),
       enc_motor_position_(0.0),
+      enc_motor_velocity_(0.0),
       motor_position_(0.0),
       motor_velocity_(0.0),
       motor_acceleration_(0.0),
@@ -60,8 +61,12 @@ EcDriveModel::EcDriveModel(const std::string &name, int iteration_per_step,
       reset_fault_(false),
       homing_done_(false),
       state_(SWITCH_ON) {
-  this->provides()->addPort("MotorPosition", port_motor_position_);
-  this->provides()->addPort("DesiredInput", port_desired_input_);
+  this->provides()->addPort("motor_position", port_motor_position_);
+  this->provides()->addPort("motor_position_command", port_motor_position_command_);
+  this->provides()->addPort("motor_velocity", port_motor_velocity_);
+  this->provides()->addPort("motor_velocity_command", port_motor_velocity_command_);
+  this->provides()->addPort("motor_current", port_motor_current_);
+  this->provides()->addPort("motor_current_command", port_motor_current_command_);
 
   this->provides()->addAttribute("state", *(reinterpret_cast<int*>(&state_)));
   this->provides()->addAttribute("homing_done", homing_done_);
@@ -86,7 +91,7 @@ RTT::Service::shared_ptr EcDriveModel::provides() {
 }
 
 void EcDriveModel::update() {
-  if (RTT::NewData == port_desired_input_.read(desired_input_)) {
+  if (RTT::NewData == port_motor_current_command_.read(desired_input_)) {
     desired_torque_ = desired_input_ * torque_constant_
         / input_current_multiplicator_;
 
@@ -96,9 +101,12 @@ void EcDriveModel::update() {
       motor_velocity_ += motor_acceleration_ / m_factor_;
       motor_position_ += motor_velocity_ / m_factor_;
       enc_motor_position_ = motor_position_ * enc_res_ / (2.0 * M_PI);
+      enc_motor_velocity_ = motor_velocity_ * enc_res_ / (2.0 * M_PI);
     }
   }
   port_motor_position_.write(enc_motor_position_);
+  port_motor_position_.write(enc_motor_velocity_);
+  port_motor_current_.write(desired_input_);
 }
 
 bool EcDriveModel::enable() {
