@@ -93,11 +93,10 @@ bool ECManager::startHook() {
     std::cout << "EC_running:" << EC->isRunning() << std::endl;
     std::cout << "Scheme_active:" << Scheme->isActive() << std::endl;
     std::cout << "Scheme_running:" << Scheme->isRunning() << std::endl;
+    stateAll();
   }
 
   auto_ = autostart_;
-
-  stateAll();
 
   return true;
 }
@@ -162,7 +161,7 @@ void ECManager::updateHook() {
               }
               break;
             case SYNCHRONIZING:
-              RTT::Attribute<State> * homing = (RTT::Attribute<State> *) EC->provides(
+              RTT::Attribute<bool> * homing = (RTT::Attribute<bool> *) EC->provides(
                   services_names_[i])->getAttribute("homing_done");
               if (homing->get()) {
                 servo_state_[i] = SYNCHRONIZED;
@@ -293,7 +292,7 @@ void ECManager::beginHomingAll() {
 
 void ECManager::homingDoneAll() {
   for (int i = 0; i < number_of_servos_; i++) {
-    RTT::Attribute<State> * homing = (RTT::Attribute<State> *) EC->provides(
+    RTT::Attribute<bool> * homing = (RTT::Attribute<bool> *) EC->provides(
         services_names_[i])->getAttribute("homing_done");
     std::cout << services_names_[i] << ": " << homing->get() << std::endl;
   }
