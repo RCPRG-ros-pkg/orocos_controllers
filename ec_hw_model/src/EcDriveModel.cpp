@@ -105,7 +105,7 @@ void EcDriveModel::update() {
     }
   }
   port_motor_position_.write(enc_motor_position_);
-  port_motor_position_.write(enc_motor_velocity_);
+  port_motor_velocity_.write(enc_motor_velocity_);
   port_motor_current_.write(desired_input_);
 }
 
