@@ -97,9 +97,9 @@ class ECManager : public RTT::TaskContext {
 
   // Properties
   bool debug_;
+  bool auto_;
+  bool autostart_;
   bool fault_autoreset_;
-  bool sequent_synchro_;
-  bool msg_;
   std::string hal_component_name_;
   std::string scheme_component_name_;
   std::vector<std::string> services_names_;
@@ -112,8 +112,18 @@ class ECManager : public RTT::TaskContext {
   bool configureHook();
   bool startHook();
   void updateHook();
-  bool resetAll();
+
+  void autoRun();
+  void setSynchronized();
+
+  bool resetFaultAll();
   bool enableAll();
+  bool disableAll();
+  void beginHomingAll();
+  void homingDoneAll();
+  void stateAll();
+
+  std::string state_text(ECServoState state);
 };
 
 #endif  // ECMANAGER_H_
