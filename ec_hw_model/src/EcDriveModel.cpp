@@ -62,11 +62,14 @@ EcDriveModel::EcDriveModel(const std::string &name, int iteration_per_step,
       homing_done_(false),
       state_(SWITCH_ON) {
   this->provides()->addPort("motor_position", port_motor_position_);
-  this->provides()->addPort("motor_position_command", port_motor_position_command_);
+  this->provides()->addPort("motor_position_command",
+                            port_motor_position_command_);
   this->provides()->addPort("motor_velocity", port_motor_velocity_);
-  this->provides()->addPort("motor_velocity_command", port_motor_velocity_command_);
+  this->provides()->addPort("motor_velocity_command",
+                            port_motor_velocity_command_);
   this->provides()->addPort("motor_current", port_motor_current_);
-  this->provides()->addPort("motor_current_command", port_motor_current_command_);
+  this->provides()->addPort("motor_current_command",
+                            port_motor_current_command_);
 
   this->provides()->addAttribute("state", *(reinterpret_cast<int*>(&state_)));
   this->provides()->addAttribute("homing_done", homing_done_);
@@ -78,6 +81,9 @@ EcDriveModel::EcDriveModel(const std::string &name, int iteration_per_step,
   this->provides()->addOperation("disable", &EcDriveModel::disable, this,
                                  RTT::OwnThread);
   this->provides()->addOperation("resetFault", &EcDriveModel::resetFault, this,
+                                 RTT::OwnThread);
+  this->provides()->addOperation("forceHomingDone",
+                                 &EcDriveModel::forceHomingDone, this,
                                  RTT::OwnThread);
 
   m_factor_ = step_per_second_ * iteration_per_step_;
@@ -132,6 +138,13 @@ bool EcDriveModel::beginHoming() {
     RTT::log(RTT::Error) << "Drive not configured for homing" << RTT::endlog();
   }
   return homing_;
+}
+
+bool EcDriveModel::forceHomingDone() {
+  if (state_ == OPERATION_ENABLED) {
+    homing_done_ = true;
+  }
+  return homing_done_;
 }
 
 bool EcDriveModel::resetFault() {

@@ -85,11 +85,13 @@ class EcDriveModel {
   void disable();
   bool beginHoming();
   bool resetFault();
+  bool forceHomingDone();
 
  protected:
   RTT::Service::shared_ptr service_;
-  double enc_motor_position_, enc_motor_velocity_, motor_position_, motor_velocity_,
-      motor_acceleration_, desired_input_, desired_torque_, effective_torque_;
+  double enc_motor_position_, enc_motor_velocity_, motor_position_,
+      motor_velocity_, motor_acceleration_, desired_input_, desired_torque_,
+      effective_torque_;
 
   int iteration_per_step_, step_per_second_;
   int m_factor_;
