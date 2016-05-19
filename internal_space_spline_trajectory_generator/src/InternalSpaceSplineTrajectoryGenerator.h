@@ -40,7 +40,6 @@
 #ifndef INTERNALSPACESPLINETRAJECTORYGENERATOR_H_
 #define INTERNALSPACESPLINETRAJECTORYGENERATOR_H_
 
-
 #include <Eigen/Dense>
 
 #include <rtt/TaskContext.hpp>
@@ -51,9 +50,6 @@
 #include <vector>
 
 #include "velocityprofile_spline.hpp"
-
-
-
 
 class InternalSpaceSplineTrajectoryGenerator : public RTT::TaskContext {
  public:
@@ -72,7 +68,6 @@ class InternalSpaceSplineTrajectoryGenerator : public RTT::TaskContext {
   RTT::InputPort<Eigen::VectorXd> port_internal_space_position_measurement_;
   RTT::OutputPort<bool> port_generator_active_;
   RTT::InputPort<bool> port_is_synchronised_;
-
 
  private:
   bool last_point_not_set_;

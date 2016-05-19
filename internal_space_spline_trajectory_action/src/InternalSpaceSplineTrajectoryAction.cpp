@@ -91,7 +91,7 @@ bool InternalSpaceSplineTrajectoryAction::configureHook() {
   if (lowerLimits_.size() != numberOfJoints_
       || upperLimits_.size() != numberOfJoints_) {
     RTT::Logger::log(RTT::Logger::Error) << "Limits not loaded"
-                                         << RTT::endlog();
+        << RTT::endlog();
     return false;
   }
 
@@ -111,7 +111,6 @@ void InternalSpaceSplineTrajectoryAction::updateHook() {
 
   if (port_joint_position_.read(joint_position_) == RTT::NoData) {
     joint_position_data = false;
-
   }
   control_msgs::FollowJointTrajectoryResult res;
 
@@ -178,7 +177,7 @@ void InternalSpaceSplineTrajectoryAction::updateHook() {
                 > g->path_tolerance[i].position) {
               violated = true;
               RTT::Logger::log(RTT::Logger::Error) << "Path tolerance violated"
-                                                   << RTT::endlog();
+                  << RTT::endlog();
             }
           }
         }
@@ -202,8 +201,7 @@ void InternalSpaceSplineTrajectoryAction::goalCB(GoalHandle gh) {
     control_msgs::FollowJointTrajectoryResult res;
 
     RTT::Logger::log(RTT::Logger::Debug) << "Received trajectory contain "
-                                         << g->trajectory.points.size()
-                                         << " points" << RTT::endlog();
+        << g->trajectory.points.size() << " points" << RTT::endlog();
 
     // fill remap table
     for (unsigned int i = 0; i < numberOfJoints_; i++) {
@@ -233,9 +231,9 @@ void InternalSpaceSplineTrajectoryAction::goalCB(GoalHandle gh) {
         if (g->trajectory.points[j].positions[i] > upperLimits_[remapTable_[i]]
             || g->trajectory.points[j].positions[i]
                 < lowerLimits_[remapTable_[i]]) {
-          RTT::Logger::log(RTT::Logger::Debug)
-              << "Invalid goal [" << i << "]: " << upperLimits_[remapTable_[i]]
-              << ">" << g->trajectory.points[j].positions[i] << ">"
+          RTT::Logger::log(RTT::Logger::Debug) << "Invalid goal [" << i << "]: "
+              << upperLimits_[remapTable_[i]] << ">"
+              << g->trajectory.points[j].positions[i] << ">"
               << lowerLimits_[remapTable_[i]] << RTT::endlog();
           invalid_goal = true;
         }
@@ -287,7 +285,7 @@ void InternalSpaceSplineTrajectoryAction::goalCB(GoalHandle gh) {
     // Sprawdzenie czasu w nagłówku OLD_HEADER_TIMESTAMP
     if (g->trajectory.header.stamp < rtt_rosclock::host_now()) {
       RTT::Logger::log(RTT::Logger::Debug) << "Old header timestamp"
-                                           << RTT::endlog();
+          << RTT::endlog();
       res.error_code =
           control_msgs::FollowJointTrajectoryResult::OLD_HEADER_TIMESTAMP;
       gh.setRejected(res, "");
@@ -304,7 +302,7 @@ void InternalSpaceSplineTrajectoryAction::goalCB(GoalHandle gh) {
     RTT::TaskContext::PeerList peers = this->getPeerList();
     for (size_t i = 0; i < peers.size(); i++) {
       RTT::Logger::log(RTT::Logger::Debug) << "Starting peer : " << peers[i]
-                                           << RTT::endlog();
+          << RTT::endlog();
       ok = ok && this->getPeer(peers[i])->start();
     }
 

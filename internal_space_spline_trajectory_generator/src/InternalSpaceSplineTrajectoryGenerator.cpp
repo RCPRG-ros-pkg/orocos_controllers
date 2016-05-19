@@ -82,7 +82,7 @@ bool InternalSpaceSplineTrajectoryGenerator::configureHook() {
     return false;
   } catch (...) {
     RTT::Logger::log(RTT::Logger::Error) << "unknown exception !!!"
-                                         << RTT::endlog();
+        << RTT::endlog();
     return false;
   }
 }
