@@ -37,7 +37,8 @@ IM2RM::IM2RM(const std::string& name)
     : RTT::TaskContext(name, PreOperational) {
   this->ports()->addPort("RadianMotorPosition", port_radian_motor_position_);
   this->ports()->addPort("IncrementalMotorPosition",
-                         port_incremental_motor_position_);
+                         port_incremental_motor_position_),
+                         number_of_servos_(0);
 
   this->addProperty("enc_res", enc_res_).doc("");
 }
