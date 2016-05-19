@@ -30,15 +30,14 @@
 
 #include "PortDoubleSplit.h"
 
-#include <string>
-
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
 #include <rtt/Component.hpp>
+#include <string>
 
 PortDoubleSplit::PortDoubleSplit(const std::string& name)
-  : RTT::TaskContext(name, PreOperational),
-    number_of_ports_(0){
+    : RTT::TaskContext(name, PreOperational),
+      number_of_ports_(0) {
   this->ports()->addPort("InputPort", input_port_);
 
   this->addProperty("number_of_ports", number_of_ports_).doc("");

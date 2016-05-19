@@ -53,7 +53,6 @@ bool IM2RM::configureHook() {
 }
 
 void IM2RM::updateHook() {
-
   if (RTT::NewData
       == port_incremental_motor_position_.read(incremental_motor_position_)) {
     for (int i = 0; i < number_of_servos_; i++) {

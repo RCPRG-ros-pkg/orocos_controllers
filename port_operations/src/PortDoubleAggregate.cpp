@@ -30,11 +30,10 @@
 
 #include "PortDoubleAggregate.h"
 
-#include <string>
-
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
 #include <rtt/Component.hpp>
+#include <string>
 
 PortDoubleAggregate::PortDoubleAggregate(const std::string& name)
     : RTT::TaskContext(name, PreOperational),
@@ -48,7 +47,6 @@ PortDoubleAggregate::~PortDoubleAggregate() {
 }
 
 bool PortDoubleAggregate::configureHook() {
-
   if (number_of_ports_ == 0) {
     return false;
   }

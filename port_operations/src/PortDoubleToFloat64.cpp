@@ -30,11 +30,10 @@
 
 #include "PortDoubleToFloat64.h"
 
-#include <string>
-
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
 #include <rtt/Component.hpp>
+#include <string>
 
 PortDoubleToFloat64::PortDoubleToFloat64(const std::string& name)
     : RTT::TaskContext(name) {

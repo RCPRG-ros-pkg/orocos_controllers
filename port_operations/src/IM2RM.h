@@ -35,23 +35,24 @@
 #include <rtt/Port.hpp>
 #include <Eigen/Dense>
 #include <string>
+#include <vector>
 
-class IM2RM: public RTT::TaskContext {
-public:
-	explicit IM2RM(const std::string& name);
-	virtual ~IM2RM();
+class IM2RM : public RTT::TaskContext {
+ public:
+  explicit IM2RM(const std::string& name);
+  virtual ~IM2RM();
 
-	bool configureHook();
-	void updateHook();
-private:
-	RTT::OutputPort<Eigen::VectorXd> port_radian_motor_position_;
-	RTT::InputPort<Eigen::VectorXd> port_incremental_motor_position_;
+  bool configureHook();
+  void updateHook();
+ private:
+  RTT::OutputPort<Eigen::VectorXd> port_radian_motor_position_;
+  RTT::InputPort<Eigen::VectorXd> port_incremental_motor_position_;
 
-	Eigen::VectorXd incremental_motor_position_, radian_motor_position_;
-	int number_of_servos_;
+  Eigen::VectorXd incremental_motor_position_, radian_motor_position_;
+  int number_of_servos_;
 
-	// Properties
-	std::vector<double> enc_res_;
+  // Properties
+  std::vector<double> enc_res_;
 };
 
 #endif  // IM2RM_H_

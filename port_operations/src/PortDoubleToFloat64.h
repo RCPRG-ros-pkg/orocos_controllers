@@ -34,10 +34,9 @@
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
 #include <std_msgs/Float64.h>
-
+#include <Eigen/Dense>
 #include <string>
 #include <vector>
-#include <Eigen/Dense>
 
 class PortDoubleToFloat64 : public RTT::TaskContext {
  public:

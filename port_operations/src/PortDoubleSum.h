@@ -31,13 +31,12 @@
 #ifndef PORTDOUBLESUM_H_
 #define PORTDOUBLESUM_H_
 
-#include <string>
-#include <vector>
-
-#include <rtt/TaskContext.hpp>
-#include <rtt/Port.hpp>
 
 #include <Eigen/Dense>
+#include <rtt/TaskContext.hpp>
+#include <rtt/Port.hpp>
+#include <string>
+#include <vector>
 
 class PortDoubleSum : public RTT::TaskContext {
  public:

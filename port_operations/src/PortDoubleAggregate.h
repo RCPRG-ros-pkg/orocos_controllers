@@ -33,10 +33,10 @@
 
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
-
+#include <Eigen/Dense>
 #include <string>
 #include <vector>
-#include <Eigen/Dense>
+
 
 class PortDoubleAggregate : public RTT::TaskContext {
  public:
