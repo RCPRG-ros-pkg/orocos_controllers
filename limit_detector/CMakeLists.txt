@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.6)
 project(limit_detector)
 
-find_package(catkin REQUIRED COMPONENTS rtt_ros cmake_modules)
+find_package(catkin REQUIRED COMPONENTS common_headers rtt_ros cmake_modules)
 
 find_package(OROCOS-RTT REQUIRED)
 include(${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake)

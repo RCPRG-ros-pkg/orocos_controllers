@@ -31,7 +31,7 @@
 #include <rtt/plugin/ServicePlugin.hpp>
 #include <string>
 #include "EcDriveModel.h"
-#include "string_colors.h"
+#include "common_headers/string_colors.h"
 
 EcDriveModel::EcDriveModel(const std::string &name, int iteration_per_step,
                            int step_per_second, double enc_res,

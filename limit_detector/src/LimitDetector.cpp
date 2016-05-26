@@ -43,7 +43,7 @@
 
 #include <string>
 #include <cmath>
-#include "string_colors.h"
+#include "common_headers/string_colors.h"
 #include "LimitDetector.h"
 
 LimitDetector::LimitDetector(const std::string& name)

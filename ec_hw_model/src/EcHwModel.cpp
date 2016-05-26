@@ -32,7 +32,7 @@
 #include <string>
 
 #include "EcHwModel.h"
-#include "string_colors.h"
+#include "common_headers/string_colors.h"
 
 EcHwModel::EcHwModel(const std::string& name)
     : RTT::TaskContext(name, PreOperational),
