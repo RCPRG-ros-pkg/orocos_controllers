@@ -40,13 +40,15 @@
 
 JointStatePublisher::JointStatePublisher(const std::string& name) :
   RTT::TaskContext(name, PreOperational), joint_names_prop("joint_names",
-      "number of joints"), number_of_joints_(0) {
+      "number of joints"), number_of_joints_(0), constant_names_prop("constant_names"), constant_positions_prop("constant_positions") {
   ports()->addPort("JointPosition", port_joint_position_);
   ports()->addPort("JointVelocity", port_joint_velocity_);
   ports()->addPort("JointEffort", port_joint_effort_);
   ports()->addPort("joint_state", joint_state_port_);
 
   this->addProperty(joint_names_prop);
+  this->addProperty(constant_names_prop);
+  this->addProperty(constant_positions_prop);
 }
 
 JointStatePublisher::~JointStatePublisher() {
@@ -58,10 +60,16 @@ bool JointStatePublisher::configureHook() {
     return false;
   number_of_joints_ = names_.size();
 
-  joint_state_.name.resize(number_of_joints_);
-  joint_state_.position.resize(number_of_joints_);
-  joint_state_.velocity.resize(number_of_joints_);
-  joint_state_.effort.resize(number_of_joints_);
+  constant_names_ = constant_names_prop.get();
+  constant_positions_ = constant_positions_prop.get();
+  if (constant_names_.size() != constant_positions_.size()) {
+    return false;
+  }
+
+  joint_state_.name.resize(number_of_joints_+constant_positions_.size());
+  joint_state_.position.resize(number_of_joints_+constant_positions_.size());
+  joint_state_.velocity.resize(number_of_joints_+constant_positions_.size());
+  joint_state_.effort.resize(number_of_joints_+constant_positions_.size());
 
   joint_position_.resize(number_of_joints_);
   joint_velocity_.resize(number_of_joints_);
@@ -69,6 +77,10 @@ bool JointStatePublisher::configureHook() {
 
   for (unsigned int i = 0; i < number_of_joints_; i++) {
     joint_state_.name[i] = names_[i].c_str();
+  }
+
+  for (unsigned int i = 0; i < constant_names_.size(); i++) {
+    joint_state_.name[number_of_joints_+i] = constant_names_[i];
   }
 
   return true;
@@ -86,6 +98,11 @@ void JointStatePublisher::updateHook() {
         joint_state_.position[i] = joint_position_[i];
         joint_state_.velocity[i] = joint_velocity_[i];
         joint_state_.effort[i] = joint_effort_[i];
+      }
+      for (unsigned int i = 0; i < constant_positions_.size(); i++) {
+        joint_state_.position[number_of_joints_ + i] = constant_positions_[i];
+        joint_state_.velocity[number_of_joints_ + i] = 0;
+        joint_state_.effort[number_of_joints_ + i] = 0;
       }
       joint_state_port_.write(joint_state_);
     } else {

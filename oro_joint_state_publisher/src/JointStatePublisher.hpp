@@ -57,6 +57,8 @@ protected:
   RTT::OutputPort<sensor_msgs::JointState> joint_state_port_;
 
   RTT::Property<std::vector<std::string> > joint_names_prop;
+  RTT::Property<std::vector<std::string> > constant_names_prop;
+  RTT::Property<std::vector<double> > constant_positions_prop;
 private:
   sensor_msgs::JointState joint_state_;
   Eigen::VectorXd joint_position_;
@@ -64,6 +66,8 @@ private:
   Eigen::VectorXd joint_effort_;
   unsigned int number_of_joints_;
   std::vector<std::string> names_;
+  std::vector<std::string> constant_names_;
+  std::vector<double> constant_positions_;
 };
 
 #endif
