@@ -58,6 +58,7 @@ bool PortDoubleSplit::configureHook() {
     snprintf(port_name, sizeof(port_name), "OutputPort_%zu", i);
     port_output_list_[i] = new typeof(*port_output_list_[i]);
     this->ports()->addPort(port_name, *port_output_list_[i]);
+    port_output_list_[i]->keepLastWrittenValue(false);
   }
 
   data_.resize(number_of_ports_);

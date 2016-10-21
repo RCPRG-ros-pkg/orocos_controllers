@@ -42,21 +42,25 @@
 
 #include "rtt_rosclock/rtt_rosclock.h"
 
+using namespace RTT;
+
 InternalSpaceSplineTrajectoryGenerator::InternalSpaceSplineTrajectoryGenerator(
     const std::string& name)
     : RTT::TaskContext(name, PreOperational),
       last_point_not_set_(false),
       trajectory_active_(false),
       trajectory_ptr_(0),
-      number_of_joints_(0) {
-  this->ports()->addPort("trajectoryPtr", port_trajectory_);
-  this->ports()->addPort("JointPositionCommand",
-                         port_internal_space_position_command_);
-  this->ports()->addPort("JointPosition",
-                         port_internal_space_position_measurement_);
-  this->ports()->addPort("GeneratorActiveOut", port_generator_active_);
-  this->ports()->addPort("IsSynchronisedIn", port_is_synchronised_);
-
+      number_of_joints_(0),
+      port_trajectory_in_("trajectoryPtr_INPORT"),
+      port_internal_space_position_command_out_("JointPositionCommand_OUTPORT", false),
+      port_generator_active_out_("GeneratorActive_OUTPORT", false),
+      port_internal_space_position_measurement_in_("JointPosition_INPORT"),
+      port_is_synchronised_in_("IsSynchronised_INPORT") {
+  this->ports()->addPort(port_trajectory_in_);
+  this->ports()->addPort(port_internal_space_position_command_out_);
+  this->ports()->addPort(port_internal_space_position_measurement_in_);
+  this->ports()->addPort(port_generator_active_out_);
+  this->ports()->addPort(port_is_synchronised_in_);
   this->addProperty("number_of_joints", number_of_joints_);
 
   return;
@@ -67,55 +71,58 @@ InternalSpaceSplineTrajectoryGenerator::~InternalSpaceSplineTrajectoryGenerator(
 }
 
 bool InternalSpaceSplineTrajectoryGenerator::configureHook() {
-  try {
-    if (number_of_joints_ <= 0)
-      return false;
+  Logger::In in("InternalSpaceSplineTrajectoryGenerator::configureHook");
 
-    vel_profile_.resize(number_of_joints_);
-
-    des_jnt_pos_.resize(number_of_joints_);
-    port_internal_space_position_command_.setDataSample(des_jnt_pos_);
-
-    return true;
-  } catch (std::exception &e) {
-    RTT::Logger::log(RTT::Logger::Error) << e.what() << RTT::endlog();
-    return false;
-  } catch (...) {
-    RTT::Logger::log(RTT::Logger::Error) << "unknown exception !!!"
-        << RTT::endlog();
+  if (number_of_joints_ <= 0) {
+    Logger::log(Logger::Error) << "wrong number of joints"
+        << endlog();
     return false;
   }
+
+  vel_profile_.resize(number_of_joints_);
+
+  des_jnt_pos_.resize(number_of_joints_);
+  port_internal_space_position_command_out_.setDataSample(des_jnt_pos_);
+
+  port_internal_space_position_measurement_in_.getDataSample(setpoint_);
+  if (setpoint_.size() != number_of_joints_) {
+    Logger::log(Logger::Error) << "wrong data sample on port "
+        << port_internal_space_position_measurement_in_.getName() << endlog();
+    return false;
+  }
+
+  return true;
 }
 
 bool InternalSpaceSplineTrajectoryGenerator::startHook() {
   bool is_synchronised = true;
 
-  if (port_internal_space_position_measurement_.read(setpoint_)
+  if (port_internal_space_position_measurement_in_.read(setpoint_)
       == RTT::NoData) {
     return false;
   }
 
-  port_is_synchronised_.read(is_synchronised);
+  port_is_synchronised_in_.read(is_synchronised);
 
   if (!is_synchronised) {
     return false;
   }
 
-  port_generator_active_.write(true);
+  port_generator_active_out_.write(true);
   last_point_not_set_ = false;
   trajectory_active_ = false;
   return true;
 }
 
 void InternalSpaceSplineTrajectoryGenerator::stopHook() {
-  port_generator_active_.write(false);
+  port_generator_active_out_.write(false);
 }
 
 void InternalSpaceSplineTrajectoryGenerator::updateHook() {
-  port_generator_active_.write(true);
+  port_generator_active_out_.write(true);
 
   trajectory_msgs::JointTrajectoryConstPtr trj_ptr_tmp;
-  if (port_trajectory_.read(trj_ptr_tmp) == RTT::NewData) {
+  if (port_trajectory_in_.read(trj_ptr_tmp) == RTT::NewData) {
     trajectory_ = trj_ptr_tmp;
     trajectory_ptr_ = 0;
     old_point_ = setpoint_;
@@ -219,7 +226,7 @@ void InternalSpaceSplineTrajectoryGenerator::updateHook() {
     }
   }
 
-  port_internal_space_position_command_.write(setpoint_);
+  port_internal_space_position_command_out_.write(setpoint_);
 }
 
 ORO_CREATE_COMPONENT(InternalSpaceSplineTrajectoryGenerator)

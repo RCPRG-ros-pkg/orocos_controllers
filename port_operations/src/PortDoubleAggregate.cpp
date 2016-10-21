@@ -37,8 +37,9 @@
 
 PortDoubleAggregate::PortDoubleAggregate(const std::string& name)
     : RTT::TaskContext(name, PreOperational),
-      number_of_ports_(0) {
-  this->ports()->addPort("OutputPort", output_port_);
+      number_of_ports_(0),
+      output_port_("OutputPort", false) {
+  this->ports()->addPort(output_port_);
 
   this->addProperty("number_of_ports", number_of_ports_).doc("");
 }

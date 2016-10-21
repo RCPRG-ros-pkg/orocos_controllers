@@ -62,12 +62,12 @@ class InternalSpaceSplineTrajectoryGenerator : public RTT::TaskContext {
   virtual void updateHook();
 
  protected:
-  RTT::InputPort<trajectory_msgs::JointTrajectoryConstPtr> port_trajectory_;
+  RTT::InputPort<trajectory_msgs::JointTrajectoryConstPtr> port_trajectory_in_;
 
-  RTT::OutputPort<Eigen::VectorXd> port_internal_space_position_command_;
-  RTT::InputPort<Eigen::VectorXd> port_internal_space_position_measurement_;
-  RTT::OutputPort<bool> port_generator_active_;
-  RTT::InputPort<bool> port_is_synchronised_;
+  RTT::OutputPort<Eigen::VectorXd> port_internal_space_position_command_out_;
+  RTT::InputPort<Eigen::VectorXd> port_internal_space_position_measurement_in_;
+  RTT::OutputPort<bool> port_generator_active_out_;
+  RTT::InputPort<bool> port_is_synchronised_in_;
 
  private:
   bool last_point_not_set_;
