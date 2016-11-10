@@ -12,12 +12,6 @@ include_directories(${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
 orocos_component(im2rm src/IM2RM.cpp)
 target_link_libraries(im2rm ${catkin_LIBRARIES})
 
-orocos_component(port_double_split src/PortDoubleSplit.cpp)
-target_link_libraries(port_double_split ${catkin_LIBRARIES})
-
-orocos_component(port_double_aggregate src/PortDoubleAggregate.cpp)
-target_link_libraries(port_double_aggregate ${catkin_LIBRARIES})
-
 orocos_component(port_double_sum src/PortDoubleSum.cpp)
 target_link_libraries(port_double_sum ${catkin_LIBRARIES})
 
