@@ -50,6 +50,7 @@ bool IM2RM::configureHook() {
   number_of_servos_ = enc_res_.size();
   incremental_motor_position_.resize(number_of_servos_);
   radian_motor_position_.resize(number_of_servos_);
+  port_radian_motor_position_.setDataSample(radian_motor_position_);
   return true;
 }
 
