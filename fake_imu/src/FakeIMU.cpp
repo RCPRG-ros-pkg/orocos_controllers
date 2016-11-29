@@ -40,61 +40,24 @@
 #include <rtt/Component.hpp>
 
 #include <rtt/extras/SlaveActivity.hpp>
-
-#include "FakeIMU.h"
-
-
 #include <string>
+#include "FakeIMU.h"
 
 FakeIMU::FakeIMU(const std::string& name)
     : RTT::TaskContext(name, PreOperational),
-      number_of_drives_(0) {
-
-  this->addProperty("initial_pos", initial_pos_).doc("");
+      port_imu_msr_outport_("IMU_Msr_OUTPORT") {
+  this->addPort(port_imu_msr_outport_).doc("Imu measuremnt");
 }
 
 FakeIMU::~FakeIMU() {
 }
 
 bool FakeIMU::configureHook() {
-  number_of_drives_ = initial_pos_.size();
-
-  port_motor_position_command_list_.resize(number_of_drives_);
-  port_motor_position_list_.resize(number_of_drives_);
-  current_pos_.resize(number_of_drives_);
-
-  for (int j = 0; j < number_of_drives_; j++) {
-    char MotorPositionCommand_port_name[32];
-    snprintf(MotorPositionCommand_port_name,
-             sizeof(MotorPositionCommand_port_name), "MotorPositionCommand_%d",
-             j);
-    port_motor_position_command_list_[j] =
-        new typeof(*port_motor_position_command_list_[j]);
-    this->ports()->addPort(MotorPositionCommand_port_name,
-                           *port_motor_position_command_list_[j]);
-
-    char MotorPosition_port_name[32];
-    snprintf(MotorPosition_port_name, sizeof(MotorPosition_port_name),
-             "MotorPosition_%d", j);
-    port_motor_position_list_[j] = new typeof(*port_motor_position_list_[j]);
-    this->ports()->addPort(MotorPosition_port_name,
-                           *port_motor_position_list_[j]);
-
-    current_pos_[j] = initial_pos_[j];
-  }
   return true;
 }
 
 void FakeIMU::updateHook() {
-  double tmp_pos_command;
-
-  for (int j = 0; j < number_of_drives_; j++) {
-    if (port_motor_position_command_list_[j]->read(tmp_pos_command)
-        == RTT::NewData) {
-      current_pos_[j] = tmp_pos_command;
-    }
-    port_motor_position_list_[j]->write(current_pos_[j]);
-  }
+  port_imu_msr_outport_.write(imu_msr_);
 }
 
 ORO_CREATE_COMPONENT(FakeIMU)

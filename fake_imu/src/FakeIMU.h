@@ -41,6 +41,8 @@
 #include <string>
 #include <vector>
 
+#include "sensor_msgs/Imu.h"
+
 class FakeIMU : public RTT::TaskContext {
  public:
   explicit FakeIMU(const std::string& name);
@@ -50,15 +52,11 @@ class FakeIMU : public RTT::TaskContext {
   void updateHook();
 
  protected:
-  std::vector<RTT::InputPort<double>*> port_motor_position_command_list_;
-  std::vector<RTT::OutputPort<double>*> port_motor_position_list_;
+  RTT::OutputPort<sensor_msgs::Imu> port_imu_msr_outport_;
 
  private:
-  unsigned int number_of_drives_;
-  std::vector<double> current_pos_;
+  sensor_msgs::Imu imu_msr_;
 
-  // Properties
-  std::vector<double> initial_pos_;
 };
 
 #endif  // FAKEIMU_H_
