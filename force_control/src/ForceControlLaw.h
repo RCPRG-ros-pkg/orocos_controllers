@@ -30,6 +30,7 @@
 
 #ifndef FORCECONTROLLAW_H_
 #define FORCECONTROLLAW_H_
+
 #include <rtt/TaskContext.hpp>
 #include <rtt/Port.hpp>
 #include <geometry_msgs/Pose.h>
@@ -39,8 +40,6 @@
 #include <kdl/frames.hpp>
 #include <force_control_msgs/ForceControl.h>
 #include <string>
-
-
 
 class ForceControlLaw : public RTT::TaskContext {
  public:
