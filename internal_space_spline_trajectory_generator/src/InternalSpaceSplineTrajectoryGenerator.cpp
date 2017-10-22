@@ -42,8 +42,6 @@
 
 #include "rtt_rosclock/rtt_rosclock.h"
 
-using namespace RTT;
-
 InternalSpaceSplineTrajectoryGenerator::InternalSpaceSplineTrajectoryGenerator(
     const std::string& name)
     : RTT::TaskContext(name, PreOperational),
@@ -52,17 +50,20 @@ InternalSpaceSplineTrajectoryGenerator::InternalSpaceSplineTrajectoryGenerator(
       trajectory_ptr_(0),
       number_of_joints_(0),
       port_trajectory_in_("trajectoryPtr_INPORT"),
-      port_internal_space_position_command_out_("JointPositionCommand_OUTPORT", false),
+      port_internal_space_position_command_out_("JointPositionCommand_OUTPORT",
+                                                false),
       port_generator_active_out_("GeneratorActive_OUTPORT", false),
       port_internal_space_position_measurement_in_("JointPosition_INPORT"),
-      port_is_synchronised_in_("IsSynchronised_INPORT") {
+      port_is_synchronised_in_("IsSynchronised_INPORT"),
+      ns_interval_(0) {
   this->ports()->addPort(port_trajectory_in_);
   this->ports()->addPort(port_internal_space_position_command_out_);
   this->ports()->addPort(port_internal_space_position_measurement_in_);
   this->ports()->addPort(port_generator_active_out_);
   this->ports()->addPort(port_is_synchronised_in_);
-  this->addProperty("number_of_joints", number_of_joints_);
 
+  this->addProperty("number_of_joints", number_of_joints_);
+  this->addProperty("ns_interval", ns_interval_);
   return;
 }
 
@@ -71,11 +72,11 @@ InternalSpaceSplineTrajectoryGenerator::~InternalSpaceSplineTrajectoryGenerator(
 }
 
 bool InternalSpaceSplineTrajectoryGenerator::configureHook() {
-  Logger::In in("InternalSpaceSplineTrajectoryGenerator::configureHook");
+  RTT::Logger::In in("InternalSpaceSplineTrajectoryGenerator::configureHook");
 
   if (number_of_joints_ <= 0) {
-    Logger::log(Logger::Error) << "wrong number of joints"
-        << endlog();
+    RTT::Logger::log(RTT::Logger::Error) << "wrong number of joints"
+        << RTT::endlog();
     return false;
   }
 
@@ -84,12 +85,10 @@ bool InternalSpaceSplineTrajectoryGenerator::configureHook() {
   des_jnt_pos_.resize(number_of_joints_);
   port_internal_space_position_command_out_.setDataSample(des_jnt_pos_);
 
-  port_internal_space_position_measurement_in_.getDataSample(setpoint_);
-  if (setpoint_.size() != number_of_joints_) {
-    Logger::log(Logger::Error) << "wrong data sample on port "
-        << port_internal_space_position_measurement_in_.getName() << endlog();
-    return false;
-  }
+  ns_higher_bound_ = ns_interval_ * 1.1;
+  ns_higher_increment_ = ns_interval_ * 1.05;
+  ns_lower_bound_ = ns_interval_ * 0.9;
+  ns_lower_increment_ = ns_interval_ * 0.95;
 
   return true;
 }
@@ -102,6 +101,14 @@ bool InternalSpaceSplineTrajectoryGenerator::startHook() {
     return false;
   }
 
+  port_internal_space_position_measurement_in_.getDataSample(setpoint_);
+  if (setpoint_.size() != number_of_joints_) {
+    RTT::Logger::log(RTT::Logger::Error) << "wrong data sample on port "
+        << port_internal_space_position_measurement_in_.getName()
+        << RTT::endlog();
+    return false;
+  }
+
   port_is_synchronised_in_.read(is_synchronised);
 
   if (!is_synchronised) {
@@ -111,6 +118,10 @@ bool InternalSpaceSplineTrajectoryGenerator::startHook() {
   port_generator_active_out_.write(true);
   last_point_not_set_ = false;
   trajectory_active_ = false;
+
+  last_time_ = rtt_rosclock::host_now();
+  update_hook_iter_ = 0;
+
   return true;
 }
 
@@ -119,6 +130,7 @@ void InternalSpaceSplineTrajectoryGenerator::stopHook() {
 }
 
 void InternalSpaceSplineTrajectoryGenerator::updateHook() {
+  update_hook_iter_++;
   port_generator_active_out_.write(true);
 
   trajectory_msgs::JointTrajectoryConstPtr trj_ptr_tmp;
@@ -132,7 +144,22 @@ void InternalSpaceSplineTrajectoryGenerator::updateHook() {
   }
 
 // std::cout << "InternalSpaceSplineTrajectoryGenerator" << std::endl;
+
   ros::Time now = rtt_rosclock::host_now();
+  if ((ns_higher_bound_ > 0)
+      && (now - last_time_) >= ros::Duration(0, ns_higher_bound_)) {
+    //  std::cout << now - last_time_ << std::endl;
+    last_time_ += ros::Duration(0, ns_higher_increment_);
+    now = last_time_;
+  } else if ((ns_lower_bound_ > 0)
+      && ((now - last_time_) <= ros::Duration(0, ns_lower_bound_))
+      && (update_hook_iter_ > 1)) {
+    // std::cout << now - last_time_ << std::endl;
+    last_time_ += ros::Duration(0, ns_lower_increment_);
+    now = last_time_;
+  }
+  last_time_ = now;
+
   if (trajectory_active_ && trajectory_ && (trajectory_->header.stamp < now)) {
     for (; trajectory_ptr_ < trajectory_->points.size(); trajectory_ptr_++) {
       ros::Time trj_time = trajectory_->header.stamp

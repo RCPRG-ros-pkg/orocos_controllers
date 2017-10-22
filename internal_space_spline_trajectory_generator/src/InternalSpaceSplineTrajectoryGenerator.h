@@ -81,7 +81,18 @@ class InternalSpaceSplineTrajectoryGenerator : public RTT::TaskContext {
 
   trajectory_msgs::JointTrajectoryConstPtr trajectory_;
   size_t trajectory_ptr_;
+
+  ros::Time last_time_;
+  int update_hook_iter_;
+
+  int ns_higher_bound_;
+  int ns_higher_increment_;
+  int ns_lower_bound_;
+  int ns_lower_increment_;
+
+  // properties
   int number_of_joints_;
+  int ns_interval_;
 };
 
 #endif  // INTERNALSPACESPLINETRAJECTORYGENERATOR_H_
