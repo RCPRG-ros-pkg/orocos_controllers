@@ -2,24 +2,21 @@
   <name>limit_detector</name>
   <version>2.6.0</version>
   <description>components to detect the position and position increments limits</description>
+  <author email="tomrobotics@gmail.com">Tomasz Winiarski</author>
   <maintainer email="tomrobotics@gmail.com">Tomasz Winiarski</maintainer>
-
   <license>BSD</license>
 
-  <url type="website"></url>
-
-  <author email="tomrobotics@gmail.com">Tomasz Winiarski</author>
-  
   <buildtool_depend>catkin</buildtool_depend>
 
-  <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>std_msgs</build_depend> 
-
+  <build_depend>common_headers</build_depend>
   <build_depend>rtt</build_depend>
   <build_depend>rtt_ros</build_depend>
+  <build_depend>std_msgs</build_depend>
 
+  <run_depend>common_headers</run_depend>
   <run_depend>rtt</run_depend>
   <run_depend>rtt_ros</run_depend>
+  <run_depend>std_msgs</run_depend>
 
   <export>
     <rtt_plugin_depend>rtt_ros</rtt_plugin_depend>
