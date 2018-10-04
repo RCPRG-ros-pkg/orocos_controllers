@@ -34,6 +34,8 @@
 #include "EcHwModel.h"
 #include "common_headers/string_colors.h"
 
+using namespace RTT;
+
 EcHwModel::EcHwModel(const std::string& name)
     : RTT::TaskContext(name, PreOperational),
       number_of_servos_(0) {
@@ -58,9 +60,9 @@ bool EcHwModel::configureHook() {
       || (number_of_servos_ != services_names_.size())
       || (number_of_servos_ != inertia_.size())
       || (number_of_servos_ != viscous_friction_.size())) {
-    std::cout << std::endl << RED << "[error] hardware model " << getName()
+    Logger::log() << Logger::Error << "[error] hardware model " << getName()
         << "configuration failed: wrong properties vector length in launch file."
-        << RESET << std::endl;
+        << RESET << Logger::endl;
     return false;
   }
 

@@ -33,6 +33,8 @@
 #include "EcDriveModel.h"
 #include "common_headers/string_colors.h"
 
+using namespace RTT;
+
 EcDriveModel::EcDriveModel(const std::string &name, int iteration_per_step,
                            int step_per_second, double enc_res,
                            double torque_constant,
@@ -139,7 +141,7 @@ bool EcDriveModel::beginHoming() {
       homing_done_ = true;
     }
   } else {
-    RTT::log(RTT::Error) << "Drive not configured for homing" << RTT::endlog();
+    Logger::log() << Logger::Error << "Drive not configured for homing" << Logger::endl;
   }
   return homing_;
 }
